@@ -25,8 +25,8 @@ window.addEventListener("DOMContentLoaded", function () {
     // ── Overview ───────────────────────────────────
 
     window.updateOverview = function () {
-      const sTotal = window.savedSales.filter(x => x.status === "POSTED").reduce((s,x) => s + window.calcGross(x.rows), 0);
-      const pTotal = window.savedPurchases.filter(x => x.status === "POSTED").reduce((s,x) => s + window.calcGross(x.rows), 0);
+      const sTotal = window.savedSales.filter(x => x.status === "POSTED").reduce((s,x) => s + window.calcNet(x.rows), 0);
+      const pTotal = window.savedPurchases.filter(x => x.status === "POSTED").reduce((s,x) => s + window.calcNet(x.rows), 0);
       const net    = sTotal - pTotal;
       document.getElementById("homeSalesTotal").textContent     = sTotal.toFixed(2);
       document.getElementById("homePurchasesTotal").textContent = pTotal.toFixed(2);
@@ -53,12 +53,12 @@ window.addEventListener("DOMContentLoaded", function () {
       window.savedSales.filter(x => x.status === "POSTED").forEach(x => {
         const d = x.rows[0]?.date || "";
         const m = months.find(mo => d.startsWith(mo.key));
-        if (m) m.s += window.calcGross(x.rows);
+        if (m) m.s += window.calcNet(x.rows);
       });
       window.savedPurchases.filter(x => x.status === "POSTED").forEach(x => {
         const d = x.rows[0]?.date || "";
         const m = months.find(mo => d.startsWith(mo.key));
-        if (m) m.p += window.calcGross(x.rows);
+        if (m) m.p += window.calcNet(x.rows);
       });
       if (overviewChart) overviewChart.destroy();
       overviewChart = new Chart(canvas, {

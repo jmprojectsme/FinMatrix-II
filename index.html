@@ -31,10 +31,10 @@
 
   <!-- HOME -->
   <section id="home" class="page">
-    <h2 class="page-title">Overview <span class="sub-note">posted only</span></h2>
+    <h2 class="page-title">Overview <span class="sub-note">net amounts · posted only</span></h2>
     <div class="overview-cards">
-      <div class="card"><span>Total Sales</span><strong id="homeSalesTotal">0.00</strong></div>
-      <div class="card"><span>Total Purchases</span><strong id="homePurchasesTotal">0.00</strong></div>
+      <div class="card"><span>Total Sales (Net)</span><strong id="homeSalesTotal">0.00</strong></div>
+      <div class="card"><span>Total Purchases (Net)</span><strong id="homePurchasesTotal">0.00</strong></div>
       <div class="card"><span>Net Income</span><strong id="homeNetIncome">0.00</strong></div>
     </div>
     <div class="chart-wrapper"><canvas id="overviewChart"></canvas></div>
@@ -86,7 +86,7 @@
       </div>
       <div class="table-wrapper">
         <table class="txn-table">
-          <thead><tr><th>Date</th><th>Description</th><th>Account</th><th class="num">Net</th><th class="num">VAT</th><th>Tax</th><th></th></tr></thead>
+          <thead><tr><th>Date</th><th>Description</th><th>Account</th><th class="num">Net</th><th class="num">Output VAT</th><th>Tax</th><th></th></tr></thead>
           <tbody id="salesTableBody"></tbody>
         </table>
       </div>
@@ -100,7 +100,7 @@
         </div>
         <div class="summary-breakdown">
           <div class="summary-row"><span>Net:</span><span id="salesSummaryNet">0.00</span></div>
-          <div class="summary-row"><span>VAT (12%):</span><span id="salesSummaryVat">0.00</span></div>
+          <div class="summary-row"><span>Output VAT (12%):</span><span id="salesSummaryVat">0.00</span></div>
           <div class="summary-row"><span>Exempt/None:</span><span id="salesSummaryExempt">0.00</span></div>
           <div class="summary-row grand-total"><span>Grand Total:</span><strong id="salesSummaryGrand">0.00</strong></div>
         </div>
@@ -158,7 +158,7 @@
       </div>
       <div class="table-wrapper">
         <table class="txn-table">
-          <thead><tr><th>Date</th><th>Description</th><th>Account</th><th class="num">Net</th><th class="num">VAT</th><th>Tax</th><th></th></tr></thead>
+          <thead><tr><th>Date</th><th>Description</th><th>Account</th><th class="num">Net</th><th class="num">Input VAT</th><th>Tax</th><th></th></tr></thead>
           <tbody id="purchaseTableBody"></tbody>
         </table>
       </div>
@@ -172,7 +172,7 @@
         </div>
         <div class="summary-breakdown">
           <div class="summary-row"><span>Net:</span><span id="purchaseSummaryNet">0.00</span></div>
-          <div class="summary-row"><span>VAT (12%):</span><span id="purchaseSummaryVat">0.00</span></div>
+          <div class="summary-row"><span>Input VAT (12%):</span><span id="purchaseSummaryVat">0.00</span></div>
           <div class="summary-row"><span>Exempt/None:</span><span id="purchaseSummaryExempt">0.00</span></div>
           <div class="summary-row grand-total"><span>Grand Total:</span><strong id="purchaseSummaryGrand">0.00</strong></div>
         </div>

@@ -21,22 +21,33 @@ window.calcGross = function (rows) {
   }, 0);
 };
 
+// Net only (no VAT) — used for overview cards and chart
+window.calcNet = function (rows) {
+  return (rows||[]).reduce((s, r) => s + (parseFloat(r.net) || 0), 0);
+};
+
 window.createAccountDropdown = function (type, selected) {
   const sel = document.createElement("select");
   sel.className = "account-select";
   sel.innerHTML = `<option value="">— Account —</option>`;
-  const groups = window.COA[type] || {};
-  Object.keys(groups).forEach(g => {
-    const og = document.createElement("optgroup");
-    og.label = g;
-    groups[g].forEach(acc => {
-      const o = document.createElement("option");
-      o.value = acc; o.textContent = acc;
-      if (acc === selected) o.selected = true;
-      og.appendChild(o);
+
+  // Show all 5 COA categories so any account can be selected
+  const catLabels = { sales:"Revenue", purchases:"Expenses", assets:"Assets", liabilities:"Liabilities", equity:"Equity" };
+  Object.keys(window.COA).forEach(cat => {
+    const groups = window.COA[cat] || {};
+    Object.keys(groups).forEach(g => {
+      const og = document.createElement("optgroup");
+      og.label = (catLabels[cat] || cat) + " \u203a " + g;
+      groups[g].forEach(acc => {
+        const o = document.createElement("option");
+        o.value = acc; o.textContent = acc;
+        if (acc === selected) o.selected = true;
+        og.appendChild(o);
+      });
+      sel.appendChild(og);
     });
-    sel.appendChild(og);
   });
+
   return sel;
 };
 
