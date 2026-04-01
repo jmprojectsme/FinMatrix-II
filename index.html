@@ -68,7 +68,7 @@
       </div>
       <div class="table-wrapper">
         <table class="txn-table">
-          <thead><tr><th>Date</th><th>Customer</th><th>TIN</th><th>Reference</th><th class="num">Gross</th><th>Status</th></tr></thead>
+          <thead><tr><th>Date</th><th>Customer</th><th>TIN</th><th>Reference</th><th>Payment</th><th class="num">Gross</th><th>Status</th></tr></thead>
           <tbody id="salesListTableBody"></tbody>
         </table>
       </div>
@@ -83,6 +83,14 @@
         <div><label>Customer Name</label><input type="text" id="salesCustomer" autocomplete="off"></div>
         <div><label>TIN Number</label><input type="text" id="salesTin" autocomplete="off" placeholder="000-000-000"></div>
         <div><label>Reference No.</label><input type="text" id="salesReference" autocomplete="off"></div>
+        <div>
+          <label>Payment Method</label>
+          <select id="salesPaymentMethod" class="form-select">
+            <option value="Credit">Credit (AR)</option>
+            <option value="Cash">Cash</option>
+            <option value="Bank">Bank Transfer</option>
+          </select>
+        </div>
       </div>
       <div class="table-wrapper">
         <table class="txn-table">
@@ -140,7 +148,7 @@
       </div>
       <div class="table-wrapper">
         <table class="txn-table">
-          <thead><tr><th>Date</th><th>Supplier</th><th>TIN</th><th>Reference</th><th class="num">Gross</th><th>Status</th></tr></thead>
+          <thead><tr><th>Date</th><th>Supplier</th><th>TIN</th><th>Reference</th><th>Payment</th><th class="num">Gross</th><th>Status</th></tr></thead>
           <tbody id="purchaseListTableBody"></tbody>
         </table>
       </div>
@@ -155,6 +163,14 @@
         <div><label>Supplier Name</label><input type="text" id="purchaseSupplier" autocomplete="off"></div>
         <div><label>TIN Number</label><input type="text" id="purchaseTin" autocomplete="off" placeholder="000-000-000"></div>
         <div><label>Reference No.</label><input type="text" id="purchaseReference" autocomplete="off"></div>
+        <div>
+          <label>Payment Method</label>
+          <select id="purchasePaymentMethod" class="form-select">
+            <option value="Credit">Credit (AP)</option>
+            <option value="Cash">Cash</option>
+            <option value="Bank">Bank Transfer</option>
+          </select>
+        </div>
       </div>
       <div class="table-wrapper">
         <table class="txn-table">

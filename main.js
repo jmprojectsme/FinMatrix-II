@@ -19,8 +19,12 @@ window.addEventListener("DOMContentLoaded", function () {
     // ── Helpers ────────────────────────────────────
 
     function nowTS() { return window.nowTimestamp(); }
-
     function fmtDate(s) { return window.formatDate(s); }
+    function paymentBadge(pm) {
+      if (pm === "Cash") return `<span class="badge cash">Cash</span>`;
+      if (pm === "Bank") return `<span class="badge bank">Bank</span>`;
+      return `<span class="badge credit">Credit</span>`;
+    }
 
     // ── Overview ───────────────────────────────────
 
@@ -159,7 +163,7 @@ window.addEventListener("DOMContentLoaded", function () {
       el.textContent = s; el.className = "txn-status " + s.toLowerCase();
     }
     function lockSalesForm(lock) {
-      ["salesCustomer","salesTin","salesReference"].forEach(id => {
+      ["salesCustomer","salesTin","salesReference","salesPaymentMethod"].forEach(id => {
         const el = document.getElementById(id); if (el) el.disabled = lock;
       });
       salesBody.querySelectorAll("input,select").forEach(el => el.disabled = lock);
@@ -212,6 +216,7 @@ window.addEventListener("DOMContentLoaded", function () {
     function resetSaleForm(withRow) {
       salesBody.innerHTML = "";
       ["salesCustomer","salesTin","salesReference"].forEach(id => { const el = document.getElementById(id); if(el) el.value = ""; });
+      const pm = document.getElementById("salesPaymentMethod"); if (pm) pm.value = "Credit";
       ["salesCustomer","salesReference"].forEach(id => window.clearInlineError(document.getElementById(id)));
       [["saveSaleBtn","Save"],["postSaleBtn","Post"],["voidSaleBtn","Void"]].forEach(([id,lbl]) => {
         const b = document.getElementById(id); if(b){ b.dataset.confirmed=""; b.textContent=lbl; }
@@ -222,7 +227,7 @@ window.addEventListener("DOMContentLoaded", function () {
     }
     function showSaleJournal(txn) {
       if (!txn || txn.status === "DRAFT") { document.getElementById("salesJournalPreview").classList.add("hidden"); return; }
-      window.renderJournalEntries(window.generateJournalEntries(txn,"sales"), document.getElementById("salesJournalBody"));
+      window.renderJournalEntries(window.generateJournalEntries(txn, "sales", txn.paymentMethod || "Credit"), document.getElementById("salesJournalBody"));
       document.getElementById("salesJournalPreview").classList.remove("hidden");
     }
     function renderSalesList() {
@@ -238,11 +243,12 @@ window.addEventListener("DOMContentLoaded", function () {
         if (search && !s.customer.toLowerCase().includes(search) && !(s.reference||"").toLowerCase().includes(search) && !(s.tin||"").toLowerCase().includes(search)) return false;
         return true;
       });
-      if (!list.length) { tbody.innerHTML = `<tr class="no-hover"><td colspan="6" class="empty-state">No sales found.</td></tr>`; return; }
+      if (!list.length) { tbody.innerHTML = `<tr class="no-hover"><td colspan="7" class="empty-state">No sales found.</td></tr>`; return; }
       [...list].reverse().forEach(s => {
         const i  = window.savedSales.indexOf(s);
+        const pm = s.paymentMethod || "Credit";
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${fmtDate(s.rows[0]?.date||"")}</td><td>${s.customer}</td><td>${s.tin||"—"}</td><td>${s.reference||"—"}</td><td class="amount-cell">${window.calcGross(s.rows).toFixed(2)}</td><td>${window.statusBadge(s.status)}</td>`;
+        tr.innerHTML = `<td>${fmtDate(s.rows[0]?.date||"")}</td><td>${s.customer}</td><td>${s.tin||"—"}</td><td>${s.reference||"—"}</td><td>${paymentBadge(pm)}</td><td class="amount-cell">${window.calcGross(s.rows).toFixed(2)}</td><td>${window.statusBadge(s.status)}</td>`;
         tr.onclick = () => openSale(i);
         tbody.appendChild(tr);
       });
@@ -254,6 +260,7 @@ window.addEventListener("DOMContentLoaded", function () {
       document.getElementById("salesCustomer").value  = s.customer;
       document.getElementById("salesTin").value       = s.tin || "";
       document.getElementById("salesReference").value = s.reference || "";
+      const pm = document.getElementById("salesPaymentMethod"); if (pm) pm.value = s.paymentMethod || "Credit";
       s.rows.forEach(r => addSalesRow(r));
       setSalesStatus(s.status);
       lockSalesForm(s.status !== "DRAFT");
@@ -299,6 +306,7 @@ window.addEventListener("DOMContentLoaded", function () {
       const sale = {
         customer, reference,
         tin: document.getElementById("salesTin").value.trim(),
+        paymentMethod: document.getElementById("salesPaymentMethod").value,
         status: "DRAFT", lastEditedStatus: "Draft",
         createdAt: existing?.createdAt || nowTS(),
         postedAt:  existing?.postedAt  || null,
@@ -360,7 +368,7 @@ window.addEventListener("DOMContentLoaded", function () {
       el.textContent = s; el.className = "txn-status " + s.toLowerCase();
     }
     function lockPurchaseForm(lock) {
-      ["purchaseSupplier","purchaseTin","purchaseReference"].forEach(id => {
+      ["purchaseSupplier","purchaseTin","purchaseReference","purchasePaymentMethod"].forEach(id => {
         const el = document.getElementById(id); if (el) el.disabled = lock;
       });
       purchaseBody.querySelectorAll("input,select").forEach(el => el.disabled = lock);
@@ -413,6 +421,7 @@ window.addEventListener("DOMContentLoaded", function () {
     function resetPurchaseForm(withRow) {
       purchaseBody.innerHTML = "";
       ["purchaseSupplier","purchaseTin","purchaseReference"].forEach(id => { const el = document.getElementById(id); if(el) el.value = ""; });
+      const pm = document.getElementById("purchasePaymentMethod"); if (pm) pm.value = "Credit";
       ["purchaseSupplier","purchaseReference"].forEach(id => window.clearInlineError(document.getElementById(id)));
       [["savePurchaseBtn","Save"],["postPurchaseBtn","Post"],["voidPurchaseBtn","Void"]].forEach(([id,lbl]) => {
         const b = document.getElementById(id); if(b){ b.dataset.confirmed=""; b.textContent=lbl; }
@@ -423,7 +432,7 @@ window.addEventListener("DOMContentLoaded", function () {
     }
     function showPurchaseJournal(txn) {
       if (!txn || txn.status === "DRAFT") { document.getElementById("purchaseJournalPreview").classList.add("hidden"); return; }
-      window.renderJournalEntries(window.generateJournalEntries(txn,"purchases"), document.getElementById("purchaseJournalBody"));
+      window.renderJournalEntries(window.generateJournalEntries(txn, "purchases", txn.paymentMethod || "Credit"), document.getElementById("purchaseJournalBody"));
       document.getElementById("purchaseJournalPreview").classList.remove("hidden");
     }
     function renderPurchaseList() {
@@ -439,11 +448,12 @@ window.addEventListener("DOMContentLoaded", function () {
         if (search && !p.supplier.toLowerCase().includes(search) && !(p.reference||"").toLowerCase().includes(search) && !(p.tin||"").toLowerCase().includes(search)) return false;
         return true;
       });
-      if (!list.length) { tbody.innerHTML = `<tr class="no-hover"><td colspan="6" class="empty-state">No purchases found.</td></tr>`; return; }
+      if (!list.length) { tbody.innerHTML = `<tr class="no-hover"><td colspan="7" class="empty-state">No purchases found.</td></tr>`; return; }
       [...list].reverse().forEach(p => {
         const i  = window.savedPurchases.indexOf(p);
+        const pm = p.paymentMethod || "Credit";
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${fmtDate(p.rows[0]?.date||"")}</td><td>${p.supplier}</td><td>${p.tin||"—"}</td><td>${p.reference||"—"}</td><td class="amount-cell">${window.calcGross(p.rows).toFixed(2)}</td><td>${window.statusBadge(p.status)}</td>`;
+        tr.innerHTML = `<td>${fmtDate(p.rows[0]?.date||"")}</td><td>${p.supplier}</td><td>${p.tin||"—"}</td><td>${p.reference||"—"}</td><td>${paymentBadge(pm)}</td><td class="amount-cell">${window.calcGross(p.rows).toFixed(2)}</td><td>${window.statusBadge(p.status)}</td>`;
         tr.onclick = () => openPurchase(i);
         tbody.appendChild(tr);
       });
@@ -455,6 +465,7 @@ window.addEventListener("DOMContentLoaded", function () {
       document.getElementById("purchaseSupplier").value  = p.supplier;
       document.getElementById("purchaseTin").value       = p.tin || "";
       document.getElementById("purchaseReference").value = p.reference || "";
+      const pm = document.getElementById("purchasePaymentMethod"); if (pm) pm.value = p.paymentMethod || "Credit";
       p.rows.forEach(r => addPurchaseRow(r));
       setPurchaseStatus(p.status);
       lockPurchaseForm(p.status !== "DRAFT");
@@ -500,6 +511,7 @@ window.addEventListener("DOMContentLoaded", function () {
       const purchase = {
         supplier, reference,
         tin: document.getElementById("purchaseTin").value.trim(),
+        paymentMethod: document.getElementById("purchasePaymentMethod").value,
         status: "DRAFT", lastEditedStatus: "Draft",
         createdAt: existing?.createdAt || nowTS(),
         postedAt:  existing?.postedAt  || null,

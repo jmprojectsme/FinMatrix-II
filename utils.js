@@ -108,28 +108,48 @@ window.loadAuditLog = function (type) {
   if (statusEl) statusEl.textContent = rec.lastEditedStatus || "Draft";
 };
 
-window.generateJournalEntries = function (txn, type) {
+window.generateJournalEntries = function (txn, type, paymentMethod) {
+  const pm = paymentMethod || txn.paymentMethod || "Credit";
+
+  // Determine the offsetting account based on payment method
+  // Sales:     Cash/Bank → debit cash account;  Credit → debit Accounts Receivable
+  // Purchases: Cash/Bank → credit cash account; Credit → credit Accounts Payable
+  const cashAccount = pm === "Bank" ? "Cash in Bank" : "Cash on Hand";
+
   const map = {};
   const add = (acc, dr, cr) => {
     if (!map[acc]) map[acc] = { debit:0, credit:0 };
     map[acc].debit  += dr;
     map[acc].credit += cr;
   };
+
   (txn.rows || []).forEach(r => {
     const net   = parseFloat(r.net) || 0;
     const vat   = r.tax === "VAT" ? +(net * 0.12).toFixed(2) : 0;
     const gross = +(net + vat).toFixed(2);
     const acct  = r.account || (type === "sales" ? "Sales Revenue" : "Miscellaneous Expense");
+
     if (type === "sales") {
-      add("Accounts Receivable", gross, 0);
+      // Sales entry:
+      // DR  Cash/AR          (gross)
+      // CR  Revenue account  (net)
+      // CR  Output VAT Payable (vat, if applicable)
+      const drAcct = pm === "Credit" ? "Accounts Receivable" : cashAccount;
+      add(drAcct, gross, 0);
       add(acct, 0, net);
       if (vat > 0) add("Output VAT Payable", 0, vat);
     } else {
+      // Purchase entry:
+      // DR  Expense account  (net)
+      // DR  Input VAT        (vat, if applicable)
+      // CR  Cash/AP          (gross)
+      const crAcct = pm === "Credit" ? "Accounts Payable" : cashAccount;
       add(acct, net, 0);
       if (vat > 0) add("Input VAT", vat, 0);
-      add("Accounts Payable", 0, gross);
+      add(crAcct, 0, gross);
     }
   });
+
   return Object.entries(map).map(([account, v]) => ({ account, debit: v.debit, credit: v.credit }));
 };
 
