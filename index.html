@@ -9,7 +9,10 @@
 <body>
 
 <header>
-  <div class="title"><h1>FinMatrix</h1></div>
+  <div class="title">
+    <h1>FinMatrix</h1>
+    <span class="company-sub hidden"></span>
+  </div>
   <nav>
     <ul>
       <li><a href="#home"           class="nav-link">Home</a></li>
@@ -20,7 +23,12 @@
       <li class="settings-menu">
         <button type="button" id="settingsBtn">Settings</button>
         <ul id="settingsDropdown" class="hidden">
-          <li><a href="#coa" class="nav-link">COA</a></li>
+          <li><a href="#company-profile" class="nav-link">🏢 Company Profile</a></li>
+          <li><a href="#coa"             class="nav-link">📊 Chart of Accounts</a></li>
+          <li><a href="#tutorial"        class="nav-link">📖 Tutorial</a></li>
+          <li><a href="#about"           class="nav-link">ℹ️ About</a></li>
+          <li class="dropdown-divider"></li>
+          <li><button type="button" id="driveBackupBtn" class="dropdown-action-btn">☁️ Backup Data</button></li>
         </ul>
       </li>
     </ul>
@@ -31,13 +39,24 @@
 
   <!-- HOME -->
   <section id="home" class="page">
-    <h2 class="page-title">Overview <span class="sub-note">net amounts · posted only</span></h2>
+    <h2 class="page-title">Overview <span class="sub-note">net · posted only</span></h2>
     <div class="overview-cards">
-      <div class="card"><span>Total Sales (Net)</span><strong id="homeSalesTotal">0.00</strong></div>
-      <div class="card"><span>Total Purchases (Net)</span><strong id="homePurchasesTotal">0.00</strong></div>
-      <div class="card"><span>Net Income</span><strong id="homeNetIncome">0.00</strong></div>
+      <div class="card card-sales">
+        <span>Total Sales (Net)</span>
+        <strong id="homeSalesTotal">0.00</strong>
+      </div>
+      <div class="card card-purchases">
+        <span>Total Purchases (Net)</span>
+        <strong id="homePurchasesTotal">0.00</strong>
+      </div>
+      <div class="card card-net">
+        <span>Net Income</span>
+        <strong id="homeNetIncome">0.00</strong>
+      </div>
     </div>
-    <div class="chart-wrapper"><canvas id="overviewChart"></canvas></div>
+    <div class="chart-wrapper">
+      <canvas id="overviewChart"></canvas>
+    </div>
     <div class="overview-recent">
       <div class="recent-block">
         <h3 class="recent-title">Recent Sales</h3>
@@ -109,7 +128,7 @@
         <div class="summary-breakdown">
           <div class="summary-row"><span>Net:</span><span id="salesSummaryNet">0.00</span></div>
           <div class="summary-row"><span>Output VAT (12%):</span><span id="salesSummaryVat">0.00</span></div>
-          <div class="summary-row"><span>Exempt/None:</span><span id="salesSummaryExempt">0.00</span></div>
+          <div class="summary-row"><span>Exempt / None:</span><span id="salesSummaryExempt">0.00</span></div>
           <div class="summary-row grand-total"><span>Grand Total:</span><strong id="salesSummaryGrand">0.00</strong></div>
         </div>
       </div>
@@ -122,9 +141,9 @@
       </div>
       <div class="button-row">
         <button type="button" id="saveSaleBtn">Save</button>
-        <button type="button" id="editSaleBtn" class="hidden">Edit</button>
-        <button type="button" id="postSaleBtn" class="hidden">Post</button>
-        <button type="button" id="voidSaleBtn" class="hidden">Void</button>
+        <button type="button" id="editSaleBtn"  class="hidden">Edit</button>
+        <button type="button" id="postSaleBtn"  class="hidden">Post</button>
+        <button type="button" id="voidSaleBtn"  class="hidden">Void</button>
         <button type="button" id="cancelSaleBtn">Cancel</button>
       </div>
     </div>
@@ -189,7 +208,7 @@
         <div class="summary-breakdown">
           <div class="summary-row"><span>Net:</span><span id="purchaseSummaryNet">0.00</span></div>
           <div class="summary-row"><span>Input VAT (12%):</span><span id="purchaseSummaryVat">0.00</span></div>
-          <div class="summary-row"><span>Exempt/None:</span><span id="purchaseSummaryExempt">0.00</span></div>
+          <div class="summary-row"><span>Exempt / None:</span><span id="purchaseSummaryExempt">0.00</span></div>
           <div class="summary-row grand-total"><span>Grand Total:</span><strong id="purchaseSummaryGrand">0.00</strong></div>
         </div>
       </div>
@@ -202,9 +221,9 @@
       </div>
       <div class="button-row">
         <button type="button" id="savePurchaseBtn">Save</button>
-        <button type="button" id="editPurchaseBtn" class="hidden">Edit</button>
-        <button type="button" id="postPurchaseBtn" class="hidden">Post</button>
-        <button type="button" id="voidPurchaseBtn" class="hidden">Void</button>
+        <button type="button" id="editPurchaseBtn"  class="hidden">Edit</button>
+        <button type="button" id="postPurchaseBtn"  class="hidden">Post</button>
+        <button type="button" id="voidPurchaseBtn"  class="hidden">Void</button>
         <button type="button" id="cancelPurchaseBtn">Cancel</button>
       </div>
     </div>
@@ -215,7 +234,7 @@
     <h2 class="page-title">General Journal <span class="sub-note">posted only</span></h2>
     <div class="report-filters">
       <div><label>From</label><input type="date" id="journalFromDate"></div>
-      <div><label>To</label><input type="date" id="journalToDate"></div>
+      <div><label>To</label>  <input type="date" id="journalToDate"></div>
       <button type="button" class="btn-primary" id="runJournalBtn">Run</button>
     </div>
     <div id="journalOutput"></div>
@@ -226,25 +245,54 @@
     <h2 class="page-title">Reports <span class="sub-note">posted only</span></h2>
     <div class="report-filters">
       <div><label>From</label><input type="date" id="reportFromDate"></div>
-      <div><label>To</label><input type="date" id="reportToDate"></div>
+      <div><label>To</label>  <input type="date" id="reportToDate"></div>
       <div>
-        <label>Type</label>
+        <label>Report Type</label>
         <select id="reportType">
           <option value="both">Sales &amp; Purchases</option>
           <option value="sales">Sales Only</option>
           <option value="purchases">Purchases Only</option>
           <option value="trial">Trial Balance</option>
+          <option value="is">Income Statement</option>
+          <option value="bs">Balance Sheet</option>
         </select>
       </div>
-      <button type="button" class="btn-primary" id="runReportBtn">Run</button>
-      <button type="button" class="btn-export"  id="exportCsvBtn">⬇ Export CSV</button>
+      <button type="button" class="btn-primary"  id="runReportBtn">Run Report</button>
+      <button type="button" class="btn-export"   id="exportCsvBtn">⬇ Export CSV</button>
     </div>
     <div id="reportOutput"></div>
   </section>
 
+  <!-- COMPANY PROFILE -->
+  <section id="company-profile" class="page hidden">
+    <h2 class="page-title">🏢 Company Profile</h2>
+    <div class="settings-form">
+      <div class="settings-group">
+        <h3 class="settings-group-title">Business Information</h3>
+        <div class="settings-field"><label>Company / Business Name</label><input type="text" id="cpName" placeholder="e.g. Juan dela Cruz Trading"></div>
+        <div class="settings-field"><label>Business Address</label><textarea id="cpAddress" rows="2" placeholder="Street, City, Province"></textarea></div>
+        <div class="settings-field">
+          <label>Business Nature</label>
+          <select id="cpNature" class="form-select">
+            <option value="VAT">VAT Registered</option>
+            <option value="Non-VAT">Non-VAT</option>
+          </select>
+        </div>
+        <div class="settings-field"><label>Contact / Email</label><input type="text" id="cpContact" placeholder="09xx-xxx-xxxx or email"></div>
+      </div>
+      <div class="settings-group">
+        <h3 class="settings-group-title">BIR Registration Details</h3>
+        <div class="settings-field"><label>TIN (Tax Identification Number)</label><input type="text" id="cpTin" placeholder="000-000-000-000"></div>
+        <div class="settings-field"><label>RDO Code</label><input type="text" id="cpRdo" placeholder="e.g. 040"></div>
+        <div class="settings-field"><label>BIR Certificate of Registration No.</label><input type="text" id="cpBirReg" placeholder="e.g. RC-0000-00000000"></div>
+      </div>
+      <button type="button" class="btn-primary btn-full" id="saveCompanyProfileBtn">Save Profile</button>
+    </div>
+  </section>
+
   <!-- COA -->
   <section id="coa" class="page hidden">
-    <h2 class="page-title">Chart of Accounts</h2>
+    <h2 class="page-title">📊 Chart of Accounts</h2>
     <div class="coa-tabs">
       <button class="coa-tab active" data-coa-tab="sales">Revenue</button>
       <button class="coa-tab" data-coa-tab="purchases">Expenses</button>
@@ -254,44 +302,40 @@
     </div>
     <div class="coa-panel active" id="coa-panel-sales">
       <div id="coaSalesGroups"></div>
-      <div class="coa-new-group">
-        <input type="text" id="newSalesGroupName" placeholder="New group name">
-        <button type="button" class="btn-primary" id="addSalesGroupBtn">+ Group</button>
-      </div>
+      <div class="coa-new-group"><input type="text" id="newSalesGroupName" placeholder="New group name"><button type="button" class="btn-primary" id="addSalesGroupBtn">+ Group</button></div>
     </div>
     <div class="coa-panel" id="coa-panel-purchases">
       <div id="coaPurchasesGroups"></div>
-      <div class="coa-new-group">
-        <input type="text" id="newPurchasesGroupName" placeholder="New group name">
-        <button type="button" class="btn-primary" id="addPurchasesGroupBtn">+ Group</button>
-      </div>
+      <div class="coa-new-group"><input type="text" id="newPurchasesGroupName" placeholder="New group name"><button type="button" class="btn-primary" id="addPurchasesGroupBtn">+ Group</button></div>
     </div>
     <div class="coa-panel" id="coa-panel-assets">
       <div id="coaAssetsGroups"></div>
-      <div class="coa-new-group">
-        <input type="text" id="newAssetsGroupName" placeholder="New group name">
-        <button type="button" class="btn-primary" id="addAssetsGroupBtn">+ Group</button>
-      </div>
+      <div class="coa-new-group"><input type="text" id="newAssetsGroupName" placeholder="New group name"><button type="button" class="btn-primary" id="addAssetsGroupBtn">+ Group</button></div>
     </div>
     <div class="coa-panel" id="coa-panel-liabilities">
       <div id="coaLiabilitiesGroups"></div>
-      <div class="coa-new-group">
-        <input type="text" id="newLiabilitiesGroupName" placeholder="New group name">
-        <button type="button" class="btn-primary" id="addLiabilitiesGroupBtn">+ Group</button>
-      </div>
+      <div class="coa-new-group"><input type="text" id="newLiabilitiesGroupName" placeholder="New group name"><button type="button" class="btn-primary" id="addLiabilitiesGroupBtn">+ Group</button></div>
     </div>
     <div class="coa-panel" id="coa-panel-equity">
       <div id="coaEquityGroups"></div>
-      <div class="coa-new-group">
-        <input type="text" id="newEquityGroupName" placeholder="New group name">
-        <button type="button" class="btn-primary" id="addEquityGroupBtn">+ Group</button>
-      </div>
+      <div class="coa-new-group"><input type="text" id="newEquityGroupName" placeholder="New group name"><button type="button" class="btn-primary" id="addEquityGroupBtn">+ Group</button></div>
     </div>
+  </section>
+
+  <!-- TUTORIAL -->
+  <section id="tutorial" class="page hidden">
+    <h2 class="page-title">📖 How to Use FinMatrix</h2>
+    <div id="tutorialContent"></div>
+  </section>
+
+  <!-- ABOUT -->
+  <section id="about" class="page hidden">
+    <h2 class="page-title">ℹ️ About</h2>
+    <div id="aboutContent"></div>
   </section>
 
 </main>
 
-<!-- Load Chart.js then app scripts (NO defer — sequential execution guaranteed) -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 <script src="config.js"></script>
 <script src="db.js"></script>
