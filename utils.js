@@ -31,13 +31,30 @@ window.createAccountDropdown = function (type, selected) {
   sel.className = "account-select";
   sel.innerHTML = `<option value="">— Account —</option>`;
 
-  // Show all 5 COA categories so any account can be selected
-  const catLabels = { sales:"Revenue", purchases:"Expenses", assets:"Assets", liabilities:"Liabilities", equity:"Equity" };
-  Object.keys(window.COA).forEach(cat => {
+  // All 5 categories shown in both Sales and Purchases
+  // Grouped clearly with category prefix so users can find EWT,
+  // Output/Input VAT, AR/AP etc. without confusion
+  const catLabels = {
+    sales:       "Revenue",
+    purchases:   "Expenses",
+    assets:      "Assets",
+    liabilities: "Liabilities",
+    equity:      "Equity"
+  };
+
+  // Put the "natural" category first for context
+  // Sales → Revenue first | Purchases → Expenses first
+  const naturalFirst = type === "sales" ? "sales" : "purchases";
+  const orderedCats  = [
+    naturalFirst,
+    ...Object.keys(window.COA).filter(c => c !== naturalFirst)
+  ];
+
+  orderedCats.forEach(cat => {
     const groups = window.COA[cat] || {};
     Object.keys(groups).forEach(g => {
       const og = document.createElement("optgroup");
-      og.label = (catLabels[cat] || cat) + " \u203a " + g;
+      og.label = `[${catLabels[cat] || cat}] ${g}`;
       groups[g].forEach(acc => {
         const o = document.createElement("option");
         o.value = acc; o.textContent = acc;

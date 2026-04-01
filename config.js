@@ -20,8 +20,29 @@ window.COA = {
     "Non-Current Assets": ["Property, Plant & Equipment","Accumulated Depreciation","Intangible Assets"]
   },
   liabilities: {
-    "Current Liabilities": ["Accounts Payable","Accrued Expenses","Output VAT Payable","Income Tax Payable","Unearned Revenue"],
-    "Non-Current Liabilities": ["Notes Payable - Long Term","Mortgage Payable"]
+    "Current Liabilities": [
+      "Accounts Payable",
+      "Accrued Expenses",
+      "Output VAT Payable",
+      "Income Tax Payable",
+      "Unearned Revenue"
+    ],
+    "Withholding Taxes Payable": [
+      "EWT Payable - Professional (10%)",
+      "EWT Payable - Rental (5%)",
+      "EWT Payable - Supplier (2%)",
+      "EWT Payable - Supplier (1%)",
+      "Withholding Tax on Compensation"
+    ],
+    "Government Contributions Payable": [
+      "SSS Payable",
+      "PhilHealth Payable",
+      "Pag-IBIG Payable"
+    ],
+    "Non-Current Liabilities": [
+      "Notes Payable - Long Term",
+      "Mortgage Payable"
+    ]
   },
   equity: {
     "Owner's Equity": ["Owner's Capital","Owner's Drawing","Retained Earnings","Current Year Earnings"]
