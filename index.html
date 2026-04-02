@@ -2,16 +2,38 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="FinMatrix"/>
+  <meta name="application-name" content="FinMatrix"/>
+  <meta name="theme-color" content="#1e40af"/>
+  <meta name="description" content="Free mobile-first accounting tool for Philippine small businesses and freelancers."/>
+
   <title>FinMatrix</title>
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json"/>
+
+  <!-- Favicons & Icons -->
+  <link rel="icon"             type="image/png" sizes="32x32"  href="favicon-32x32.png"/>
+  <link rel="apple-touch-icon" sizes="180x180"                 href="apple-touch-icon.png"/>
+  <link rel="icon"             type="image/png" sizes="192x192" href="icon-192x192.png"/>
+
   <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
 
 <header>
   <div class="title">
-    <h1>FinMatrix</h1>
-    <span class="company-sub hidden"></span>
+    <div class="title-inner">
+      <img src="logo.png" alt="FinMatrix" class="header-logo"/>
+      <div>
+        <h1>FinMatrix</h1>
+        <span class="company-sub hidden"></span>
+      </div>
+    </div>
   </div>
   <nav>
     <ul>
@@ -341,5 +363,16 @@
 <script src="db.js"></script>
 <script src="utils.js"></script>
 <script src="main.js"></script>
+
+<!-- PWA Service Worker Registration -->
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./sw.js")
+        .then(reg => console.log("FinMatrix SW registered:", reg.scope))
+        .catch(err => console.error("SW registration failed:", err));
+    });
+  }
+</script>
 </body>
 </html>
