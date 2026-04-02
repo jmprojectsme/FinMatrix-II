@@ -666,58 +666,85 @@ window.addEventListener("DOMContentLoaded", function () {
     }
 
     function balanceSheet(from,to){
-      const ledger=buildLedger(from,to);
-      const assetAccts     = Object.values(window.COA.assets||{}).flat();
-      const liabAccts      = Object.values(window.COA.liabilities||{}).flat();
-      const equityAccts    = Object.values(window.COA.equity||{}).flat();
+      const ledger      = buildLedger(from,to);
+      const assetAccts  = Object.values(window.COA.assets||{}).flat();
+      const liabAccts   = Object.values(window.COA.liabilities||{}).flat();
+      const equityAccts = Object.values(window.COA.equity||{}).flat();
 
       let totalAssets=0, totalLiab=0, totalEquity=0;
       const assetRows=[], liabRows=[], equityRows=[];
 
       Object.entries(ledger).forEach(([acc,v])=>{
-        const dr=v.debit-v.credit;
-        const cr=v.credit-v.debit;
-        if(assetAccts.includes(acc)&&dr!==0)  { totalAssets+=dr;  assetRows.push([acc,dr]); }
-        if(liabAccts.includes(acc)&&cr!==0)   { totalLiab+=cr;    liabRows.push([acc,cr]); }
-        if(equityAccts.includes(acc)&&cr!==0) { totalEquity+=cr;  equityRows.push([acc,cr]); }
+        // Assets: normal balance is DEBIT (DR > CR = positive asset)
+        // but Cash credited more than debited = negative (still show it)
+        if(assetAccts.includes(acc)){
+          const bal = v.debit - v.credit;
+          if(bal !== 0){ totalAssets += bal; assetRows.push([acc, bal]); }
+        }
+        // Liabilities: normal balance is CREDIT
+        if(liabAccts.includes(acc)){
+          const bal = v.credit - v.debit;
+          if(bal !== 0){ totalLiab += bal; liabRows.push([acc, bal]); }
+        }
+        // Equity: normal balance is CREDIT
+        if(equityAccts.includes(acc)){
+          const bal = v.credit - v.debit;
+          if(bal !== 0){ totalEquity += bal; equityRows.push([acc, bal]); }
+        }
       });
 
-      // Add net income to equity
-      const lisTb=buildLedger(from,to);
-      const revenueAccts=Object.values(window.COA.sales||{}).flat();
-      const expenseAccts=Object.values(window.COA.purchases||{}).flat();
-      let rev=0,exp=0;
-      Object.entries(lisTb).forEach(([acc,v])=>{
-        if(revenueAccts.includes(acc)) rev+=v.credit-v.debit;
-        if(expenseAccts.includes(acc)) exp+=v.debit-v.credit;
+      // Add current year net income to equity section
+      const revenueAccts = Object.values(window.COA.sales||{}).flat();
+      const expenseAccts = Object.values(window.COA.purchases||{}).flat();
+      let rev=0, exp=0;
+      Object.entries(ledger).forEach(([acc,v])=>{
+        if(revenueAccts.includes(acc)) rev += v.credit - v.debit;
+        if(expenseAccts.includes(acc)) exp += v.debit  - v.credit;
       });
-      const netIncome=rev-exp;
-      if(netIncome!==0){ totalEquity+=netIncome; equityRows.push(["Current Year Net Income",netIncome]); }
+      const netIncome = rev - exp;
+      if(netIncome !== 0){
+        totalEquity += netIncome;
+        equityRows.push(["Current Year Net Income", netIncome]);
+      }
 
-      const comp=window.companyProfile;
-      const header=comp.name?`<div class="fs-company"><strong>${comp.name}</strong>${comp.tin?` | TIN: ${comp.tin}`:""}</div>`:"";
+      const totalLiabEquity = totalLiab + totalEquity;
+      const balanced = Math.abs(totalAssets - totalLiabEquity) < 0.01;
+
+      const comp   = window.companyProfile;
+      const header = comp.name
+        ? `<div class="fs-company"><strong>${comp.name}</strong>${comp.tin ? ` | TIN: ${comp.tin}` : ""}</div>`
+        : "";
+
+      const fmtAmt = v => v < 0 ? `(${Math.abs(v).toFixed(2)})` : v.toFixed(2);
 
       return `<div class="report-section">
         <h3>Balance Sheet (Statement of Financial Position)</h3>
         ${header}
         <p class="report-period">As of: ${fmtDate(to)||"Today"}</p>
+        ${!balanced ? `<div class="tb-err">⚠ Balance Sheet does not balance — you may have unrecorded equity or opening balances</div>` : ""}
         <table class="report-table">
           <thead><tr><th>Account</th><th class="num">Amount</th></tr></thead>
           <tbody>
             <tr class="fs-section-header"><td colspan="2"><strong>ASSETS</strong></td></tr>
-            ${assetRows.map(([a,v])=>`<tr><td class="fs-indent">${a}</td><td class="num">${v.toFixed(2)}</td></tr>`).join("")||"<tr><td class='fs-indent' colspan='2' style='color:#94a3b8'>No asset balances recorded</td></tr>"}
-            <tr class="fs-subtotal"><td><strong>Total Assets</strong></td><td class="num"><strong>${totalAssets.toFixed(2)}</strong></td></tr>
+            ${assetRows.length
+              ? assetRows.map(([a,v])=>`<tr><td class="fs-indent">${a}</td><td class="num">${fmtAmt(v)}</td></tr>`).join("")
+              : `<tr><td class="fs-indent" colspan="2" style="color:#94a3b8">No asset balances — use Cash or Bank payment method to record asset movements</td></tr>`}
+            <tr class="fs-subtotal"><td><strong>Total Assets</strong></td><td class="num"><strong>${fmtAmt(totalAssets)}</strong></td></tr>
             <tr class="fs-section-header"><td colspan="2"><strong>LIABILITIES</strong></td></tr>
-            ${liabRows.map(([a,v])=>`<tr><td class="fs-indent">${a}</td><td class="num">${v.toFixed(2)}</td></tr>`).join("")||"<tr><td class='fs-indent' colspan='2' style='color:#94a3b8'>No liability balances recorded</td></tr>"}
-            <tr class="fs-subtotal"><td><strong>Total Liabilities</strong></td><td class="num"><strong>${totalLiab.toFixed(2)}</strong></td></tr>
+            ${liabRows.length
+              ? liabRows.map(([a,v])=>`<tr><td class="fs-indent">${a}</td><td class="num">${fmtAmt(v)}</td></tr>`).join("")
+              : `<tr><td class="fs-indent" colspan="2" style="color:#94a3b8">No liability balances</td></tr>`}
+            <tr class="fs-subtotal"><td><strong>Total Liabilities</strong></td><td class="num"><strong>${fmtAmt(totalLiab)}</strong></td></tr>
             <tr class="fs-section-header"><td colspan="2"><strong>EQUITY</strong></td></tr>
-            ${equityRows.map(([a,v])=>`<tr><td class="fs-indent">${a}</td><td class="num">${v.toFixed(2)}</td></tr>`).join("")||"<tr><td class='fs-indent' colspan='2' style='color:#94a3b8'>No equity balances recorded</td></tr>"}
-            <tr class="fs-subtotal"><td><strong>Total Equity</strong></td><td class="num"><strong>${totalEquity.toFixed(2)}</strong></td></tr>
+            ${equityRows.length
+              ? equityRows.map(([a,v])=>`<tr><td class="fs-indent">${a}</td><td class="num">${fmtAmt(v)}</td></tr>`).join("")
+              : `<tr><td class="fs-indent" colspan="2" style="color:#94a3b8">No equity balances</td></tr>`}
+            <tr class="fs-subtotal"><td><strong>Total Equity</strong></td><td class="num"><strong>${fmtAmt(totalEquity)}</strong></td></tr>
           </tbody>
           <tfoot>
-            <tr class="${Math.abs(totalAssets-(totalLiab+totalEquity))<0.01?"fs-profit":"fs-loss"}">
+            <tr class="${balanced?"fs-profit":"fs-loss"}">
               <td><strong>Total Liabilities + Equity</strong></td>
-              <td class="num"><strong>${(totalLiab+totalEquity).toFixed(2)}</strong></td>
+              <td class="num"><strong>${fmtAmt(totalLiabEquity)}</strong></td>
             </tr>
           </tfoot>
         </table>
@@ -766,6 +793,28 @@ window.addEventListener("DOMContentLoaded", function () {
           if(expAccts.includes(a)&&net!==0){exp+=net;rows.push([a,net.toFixed(2)]);}
         });
         rows.push(["Total Expenses",exp.toFixed(2)],["Net Income",(rev-exp).toFixed(2)]);
+      } else if(type==="bs"){
+        rows.push(["BALANCE SHEET"],["Section","Account","Amount"]);
+        const ledger=buildLedger(from,to);
+        const assetAccts =Object.values(window.COA.assets||{}).flat();
+        const liabAccts  =Object.values(window.COA.liabilities||{}).flat();
+        const equityAccts=Object.values(window.COA.equity||{}).flat();
+        const revAccts   =Object.values(window.COA.sales||{}).flat();
+        const expAccts   =Object.values(window.COA.purchases||{}).flat();
+        let tA=0,tL=0,tE=0;
+        Object.entries(ledger).forEach(([a,v])=>{
+          if(assetAccts.includes(a)){const b=v.debit-v.credit;if(b!==0){tA+=b;rows.push(["Asset",a,b.toFixed(2)]);}}
+          if(liabAccts.includes(a)){const b=v.credit-v.debit;if(b!==0){tL+=b;rows.push(["Liability",a,b.toFixed(2)]);}}
+          if(equityAccts.includes(a)){const b=v.credit-v.debit;if(b!==0){tE+=b;rows.push(["Equity",a,b.toFixed(2)]);}}
+        });
+        let rev=0,exp=0;
+        Object.entries(ledger).forEach(([a,v])=>{
+          if(revAccts.includes(a)) rev+=v.credit-v.debit;
+          if(expAccts.includes(a)) exp+=v.debit-v.credit;
+        });
+        const ni=rev-exp;
+        if(ni!==0){tE+=ni;rows.push(["Equity","Current Year Net Income",ni.toFixed(2)]);}
+        rows.push(["","Total Assets",tA.toFixed(2)],["","Total Liabilities",tL.toFixed(2)],["","Total Equity",tE.toFixed(2)],["","Total Liabilities + Equity",(tL+tE).toFixed(2)]);
       } else {
         if(type==="both"||type==="sales"){
           rows.push(["SALES BY ACCOUNT"],["Account","Net","VAT","Gross"]);
