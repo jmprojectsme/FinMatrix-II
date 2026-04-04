@@ -49,7 +49,9 @@ window.COA = {
   },
   assets: {
     "Current Assets": [
-      "Cash on Hand","Cash in Bank","Accounts Receivable",
+      "Cash on Hand","Cash in Bank",
+      "GCash","Maya","Other E-Wallet",
+      "Accounts Receivable",
       "Merchandise Inventory","Prepaid Expenses","Input VAT"
     ],
     "Non-Current Assets": [

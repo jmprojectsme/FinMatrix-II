@@ -262,6 +262,37 @@ main{padding:14px;max-width:1200px;margin:0 auto}
 .tut-body p{font-size:13px;color:#475569;line-height:1.6}
 .tut-body strong{color:#1e40af}
 
+/* ── Payment Section (Xero-style) ────────────── */
+.payment-section{background:white;border-radius:10px;border:1px solid #e2e8f0;border-left:4px solid #1e40af;padding:16px;margin-top:14px}
+.payment-section-title{font-size:12px;font-weight:800;color:#1e40af;text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px}
+.payment-type-label{font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:8px}
+.payment-type-options{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px}
+
+/* Radio pill buttons */
+.ptype-btn{cursor:pointer}
+.ptype-btn input[type=radio]{position:absolute;opacity:0;width:0;height:0}
+.ptype-btn span{display:inline-block;padding:6px 13px;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;border:2px solid #e2e8f0;border-radius:999px;color:#64748b;background:white;transition:all .15s;cursor:pointer;user-select:none}
+.ptype-btn input[type=radio]:checked + span{background:#1e40af;color:white;border-color:#1e40af}
+.ptype-btn span:hover{border-color:#93c5fd;color:#1e40af}
+
+/* Payment fields grid */
+.payment-fields{padding-top:4px}
+.payment-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:480px){.payment-grid{grid-template-columns:1fr}}
+.payment-grid label{display:block;font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.payment-grid input{width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:13px;color:#1e293b;background:white;transition:border-color .15s}
+.payment-grid input:focus{outline:none;border-color:#93c5fd;box-shadow:0 0 0 3px rgba(147,197,253,.2)}
+.payment-grid input:disabled{background:#f8fafc;color:#94a3b8;cursor:not-allowed}
+.payment-note{font-size:12px;color:#64748b;background:#f8fafc;padding:10px 12px;border-radius:6px;border-left:3px solid #cbd5e1;line-height:1.6}
+.payment-locked .ptype-btn span{cursor:not-allowed;opacity:.7}
+.payment-locked input:disabled{cursor:not-allowed}
+
+/* Payment badges in list */
+.badge.check{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
+.badge.gcash{background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd}
+.badge.maya{background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0}
+.badge.ewallet{background:#fdf4ff;color:#7e22ce;border:1px solid #e9d5ff}
+
 /* ── Responsive ──────────────────────────────── */
 @media(max-width:480px){
   nav ul{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
