@@ -16,10 +16,152 @@ window.addEventListener("DOMContentLoaded", function () {
     function fmtDate(s) { return window.formatDate(s); }
 
     function paymentBadge(pm) {
-      if (pm === "Cash") return `<span class="badge cash">Cash</span>`;
-      if (pm === "Bank") return `<span class="badge bank">Bank</span>`;
-      return `<span class="badge credit">Credit</span>`;
+      const map = {
+        Cash:    `<span class="badge cash">Cash</span>`,
+        Check:   `<span class="badge check">Check</span>`,
+        GCash:   `<span class="badge gcash">GCash</span>`,
+        Maya:    `<span class="badge maya">Maya</span>`,
+        EWallet: `<span class="badge ewallet">E-Wallet</span>`,
+        Bank:    `<span class="badge bank">Bank</span>`,
+        Credit:  `<span class="badge credit">Credit</span>`,
+      };
+      return map[pm] || `<span class="badge draft">${pm||"—"}</span>`;
     }
+
+    // ── Payment Section Helpers ───────────────────────
+    // prefix: "sale" or "purch"
+    function initPaymentSection(prefix) {
+      const radioName = prefix === "sale" ? "salePayType" : "purchPayType";
+      document.querySelectorAll(`input[name="${radioName}"]`).forEach(radio => {
+        radio.addEventListener("change", () => showPaymentFields(prefix, radio.value));
+      });
+      showPaymentFields(prefix, "Credit");
+    }
+
+    function showPaymentFields(prefix, type) {
+      const types = ["Credit","Cash","Check","GCash","Maya","EWallet"];
+      types.forEach(t => {
+        const el = document.getElementById(`${prefix}PayFields_${t}`);
+        if (el) el.classList.toggle("hidden", t !== type);
+      });
+    }
+
+    function getPaymentType(prefix) {
+      const radioName = prefix === "sale" ? "salePayType" : "purchPayType";
+      const checked = document.querySelector(`input[name="${radioName}"]:checked`);
+      return checked ? checked.value : "Credit";
+    }
+
+    function setPaymentType(prefix, type) {
+      const radioName = prefix === "sale" ? "salePayType" : "purchPayType";
+      const radio = document.querySelector(`input[name="${radioName}"][value="${type}"]`);
+      if (radio) { radio.checked = true; showPaymentFields(prefix, type); }
+      else        { showPaymentFields(prefix, "Credit"); }
+    }
+
+    function readPaymentData(prefix) {
+      const type = getPaymentType(prefix);
+      const p = prefix;
+      const data = { type };
+      switch(type) {
+        case "Cash":
+          data.date   = document.getElementById(`${p}PayDate_Cash`)?.value || "";
+          data.amount = parseFloat(document.getElementById(`${p}PayAmt_Cash`)?.value) || 0;
+          break;
+        case "Check":
+          data.date     = document.getElementById(`${p}PayDate_Check`)?.value || "";
+          data.bankName = document.getElementById(`${p}PayBank_Check`)?.value.trim() || "";
+          data.checkNo  = document.getElementById(`${p}PayCheckNo`)?.value.trim() || "";
+          data.amount   = parseFloat(document.getElementById(`${p}PayAmt_Check`)?.value) || 0;
+          break;
+        case "GCash":
+          data.date        = document.getElementById(`${p}PayDate_GCash`)?.value || "";
+          data.accountName = document.getElementById(`${p}PayAccName_GCash`)?.value.trim() || "";
+          data.refNo       = document.getElementById(`${p}PayRef_GCash`)?.value.trim() || "";
+          data.amount      = parseFloat(document.getElementById(`${p}PayAmt_GCash`)?.value) || 0;
+          break;
+        case "Maya":
+          data.date        = document.getElementById(`${p}PayDate_Maya`)?.value || "";
+          data.accountName = document.getElementById(`${p}PayAccName_Maya`)?.value.trim() || "";
+          data.refNo       = document.getElementById(`${p}PayRef_Maya`)?.value.trim() || "";
+          data.amount      = parseFloat(document.getElementById(`${p}PayAmt_Maya`)?.value) || 0;
+          break;
+        case "EWallet":
+          data.date        = document.getElementById(`${p}PayDate_EWallet`)?.value || "";
+          data.walletName  = document.getElementById(`${p}PayWalletName`)?.value.trim() || "";
+          data.accountName = document.getElementById(`${p}PayAccName_EWallet`)?.value.trim() || "";
+          data.refNo       = document.getElementById(`${p}PayRef_EWallet`)?.value.trim() || "";
+          data.amount      = parseFloat(document.getElementById(`${p}PayAmt_EWallet`)?.value) || 0;
+          break;
+        case "Credit":
+        default:
+          break;
+      }
+      return data;
+    }
+
+    function writePaymentData(prefix, payment) {
+      if (!payment) { setPaymentType(prefix, "Credit"); return; }
+      const type = payment.type || "Credit";
+      setPaymentType(prefix, type);
+      const p = prefix;
+      switch(type) {
+        case "Cash":
+          if (document.getElementById(`${p}PayDate_Cash`))    document.getElementById(`${p}PayDate_Cash`).value    = payment.date    || "";
+          if (document.getElementById(`${p}PayAmt_Cash`))     document.getElementById(`${p}PayAmt_Cash`).value     = payment.amount  || "";
+          break;
+        case "Check":
+          if (document.getElementById(`${p}PayDate_Check`))   document.getElementById(`${p}PayDate_Check`).value   = payment.date     || "";
+          if (document.getElementById(`${p}PayBank_Check`))   document.getElementById(`${p}PayBank_Check`).value   = payment.bankName || "";
+          if (document.getElementById(`${p}PayCheckNo`))      document.getElementById(`${p}PayCheckNo`).value      = payment.checkNo  || "";
+          if (document.getElementById(`${p}PayAmt_Check`))    document.getElementById(`${p}PayAmt_Check`).value    = payment.amount   || "";
+          break;
+        case "GCash":
+          if (document.getElementById(`${p}PayDate_GCash`))      document.getElementById(`${p}PayDate_GCash`).value      = payment.date        || "";
+          if (document.getElementById(`${p}PayAccName_GCash`))   document.getElementById(`${p}PayAccName_GCash`).value   = payment.accountName || "";
+          if (document.getElementById(`${p}PayRef_GCash`))       document.getElementById(`${p}PayRef_GCash`).value       = payment.refNo       || "";
+          if (document.getElementById(`${p}PayAmt_GCash`))       document.getElementById(`${p}PayAmt_GCash`).value       = payment.amount      || "";
+          break;
+        case "Maya":
+          if (document.getElementById(`${p}PayDate_Maya`))       document.getElementById(`${p}PayDate_Maya`).value       = payment.date        || "";
+          if (document.getElementById(`${p}PayAccName_Maya`))    document.getElementById(`${p}PayAccName_Maya`).value    = payment.accountName || "";
+          if (document.getElementById(`${p}PayRef_Maya`))        document.getElementById(`${p}PayRef_Maya`).value        = payment.refNo       || "";
+          if (document.getElementById(`${p}PayAmt_Maya`))        document.getElementById(`${p}PayAmt_Maya`).value        = payment.amount      || "";
+          break;
+        case "EWallet":
+          if (document.getElementById(`${p}PayDate_EWallet`))    document.getElementById(`${p}PayDate_EWallet`).value    = payment.date        || "";
+          if (document.getElementById(`${p}PayWalletName`))      document.getElementById(`${p}PayWalletName`).value      = payment.walletName  || "";
+          if (document.getElementById(`${p}PayAccName_EWallet`)) document.getElementById(`${p}PayAccName_EWallet`).value = payment.accountName || "";
+          if (document.getElementById(`${p}PayRef_EWallet`))     document.getElementById(`${p}PayRef_EWallet`).value     = payment.refNo       || "";
+          if (document.getElementById(`${p}PayAmt_EWallet`))     document.getElementById(`${p}PayAmt_EWallet`).value     = payment.amount      || "";
+          break;
+      }
+    }
+
+    function lockPaymentSection(prefix, lock) {
+      const sectionId = prefix === "sale" ? "salesPaymentSection" : "purchasePaymentSection";
+      const section   = document.getElementById(sectionId);
+      if (!section) return;
+      section.querySelectorAll("input, select").forEach(el => el.disabled = lock);
+      section.classList.toggle("payment-locked", lock);
+    }
+
+    function resetPaymentSection(prefix) {
+      setPaymentType(prefix, "Credit");
+      const p = prefix;
+      const ids = [
+        `${p}PayDate_Cash`,`${p}PayAmt_Cash`,
+        `${p}PayDate_Check`,`${p}PayBank_Check`,`${p}PayCheckNo`,`${p}PayAmt_Check`,
+        `${p}PayDate_GCash`,`${p}PayAccName_GCash`,`${p}PayRef_GCash`,`${p}PayAmt_GCash`,
+        `${p}PayDate_Maya`,`${p}PayAccName_Maya`,`${p}PayRef_Maya`,`${p}PayAmt_Maya`,
+        `${p}PayDate_EWallet`,`${p}PayWalletName`,`${p}PayAccName_EWallet`,`${p}PayRef_EWallet`,`${p}PayAmt_EWallet`
+      ];
+      ids.forEach(id => { const el = document.getElementById(id); if(el) el.value = ""; });
+    }
+
+    // Init both payment sections
+    initPaymentSection("sale");
+    initPaymentSection("purch");
 
     // ── Overview ─────────────────────────────────────
     window.updateOverview = function () {
@@ -169,13 +311,14 @@ window.addEventListener("DOMContentLoaded", function () {
       el.textContent=s; el.className="txn-status "+s.toLowerCase();
     }
     function lockSalesForm(lock) {
-      ["salesCustomer","salesTin","salesReference","salesPaymentMethod"].forEach(id=>{
+      ["salesCustomer","salesTin","salesReference"].forEach(id=>{
         const el=document.getElementById(id); if(el) el.disabled=lock;
       });
       salesBody.querySelectorAll("input,select").forEach(el=>el.disabled=lock);
       salesBody.querySelectorAll(".btn-del").forEach(b=>b.disabled=lock);
       const addBtn=document.getElementById("addSalesRowBtn");
       addBtn.disabled=lock; addBtn.classList.toggle("hidden",lock);
+      lockPaymentSection("sale", lock);
     }
     function toggleSaleBtns(state) {
       document.getElementById("saveSaleBtn").classList.toggle("hidden", state==="posted"||state==="void");
@@ -225,7 +368,7 @@ window.addEventListener("DOMContentLoaded", function () {
     function resetSaleForm(withRow) {
       salesBody.innerHTML="";
       ["salesCustomer","salesTin","salesReference"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
-      const pm=document.getElementById("salesPaymentMethod"); if(pm) pm.value="Credit";
+      resetPaymentSection("sale");
       ["salesCustomer","salesReference"].forEach(id=>window.clearInlineError(document.getElementById(id)));
       [["saveSaleBtn","Save"],["postSaleBtn","Post"],["voidSaleBtn","Void"]].forEach(([id,lbl])=>{
         const b=document.getElementById(id); if(b){b.dataset.confirmed="";b.textContent=lbl;}
@@ -236,7 +379,7 @@ window.addEventListener("DOMContentLoaded", function () {
     }
     function showSaleJournal(txn) {
       if(!txn||txn.status==="DRAFT"){document.getElementById("salesJournalPreview").classList.add("hidden");return;}
-      window.renderJournalEntries(window.generateJournalEntries(txn,"sales",txn.paymentMethod||"Credit"),document.getElementById("salesJournalBody"));
+      window.renderJournalEntries(window.generateJournalEntries(txn,"sales",txn.payment||{type:txn.paymentMethod||"Credit"}),document.getElementById("salesJournalBody"));
       document.getElementById("salesJournalPreview").classList.remove("hidden");
     }
     function renderSalesList() {
@@ -266,7 +409,8 @@ window.addEventListener("DOMContentLoaded", function () {
       document.getElementById("salesCustomer").value =s.customer;
       document.getElementById("salesTin").value      =s.tin||"";
       document.getElementById("salesReference").value=s.reference||"";
-      const pm=document.getElementById("salesPaymentMethod"); if(pm) pm.value=s.paymentMethod||"Credit";
+      // Restore payment — support both new format (s.payment) and old (s.paymentMethod)
+      writePaymentData("sale", s.payment || { type: s.paymentMethod || "Credit" });
       s.rows.forEach(r=>addSalesRow(r));
       setSalesStatus(s.status);
       lockSalesForm(s.status!=="DRAFT");
@@ -300,10 +444,12 @@ window.addEventListener("DOMContentLoaded", function () {
       if(!this.dataset.confirmed){window.showInlineError(cEl,"Tap Save again to confirm",true);this.dataset.confirmed="true";this.textContent="Confirm Save";return;}
       this.dataset.confirmed="";this.textContent="Save";
       const existing=window.currentSaleIndex!==null?window.savedSales[window.currentSaleIndex]:null;
+      const payment=readPaymentData("sale");
       const sale={
         customer,reference,
         tin:document.getElementById("salesTin").value.trim(),
-        paymentMethod:document.getElementById("salesPaymentMethod").value,
+        payment,
+        paymentMethod: payment.type, // keep for backward compat
         status:"DRAFT",lastEditedStatus:"Draft",
         createdAt:existing?.createdAt||nowTS(),
         postedAt:existing?.postedAt||null,
@@ -354,11 +500,12 @@ window.addEventListener("DOMContentLoaded", function () {
     function showPurchaseForm(){document.getElementById("purchaseListView").classList.add("hidden");document.getElementById("purchaseFormView").classList.remove("hidden");window.scrollTo({top:0,behavior:"smooth"});}
     function setPurchaseStatus(s){const el=document.getElementById("purchaseStatus");el.textContent=s;el.className="txn-status "+s.toLowerCase();}
     function lockPurchaseForm(lock){
-      ["purchaseSupplier","purchaseTin","purchaseReference","purchasePaymentMethod"].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=lock;});
+      ["purchaseSupplier","purchaseTin","purchaseReference"].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=lock;});
       purchaseBody.querySelectorAll("input,select,textarea").forEach(el=>el.disabled=lock);
       purchaseBody.querySelectorAll(".btn-del").forEach(b=>b.disabled=lock);
       const addBtn=document.getElementById("addPurchaseRowBtn");
       addBtn.disabled=lock; addBtn.classList.toggle("hidden",lock);
+      lockPaymentSection("purch", lock);
     }
     function togglePurchaseBtns(state){
       document.getElementById("savePurchaseBtn").classList.toggle("hidden",state==="posted"||state==="void");
@@ -407,7 +554,7 @@ window.addEventListener("DOMContentLoaded", function () {
     function resetPurchaseForm(withRow){
       purchaseBody.innerHTML="";
       ["purchaseSupplier","purchaseTin","purchaseReference"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
-      const pm=document.getElementById("purchasePaymentMethod"); if(pm) pm.value="Credit";
+      resetPaymentSection("purch");
       ["purchaseSupplier","purchaseReference"].forEach(id=>window.clearInlineError(document.getElementById(id)));
       [["savePurchaseBtn","Save"],["postPurchaseBtn","Post"],["voidPurchaseBtn","Void"]].forEach(([id,lbl])=>{
         const b=document.getElementById(id); if(b){b.dataset.confirmed="";b.textContent=lbl;}
@@ -418,7 +565,7 @@ window.addEventListener("DOMContentLoaded", function () {
     }
     function showPurchaseJournal(txn){
       if(!txn||txn.status==="DRAFT"){document.getElementById("purchaseJournalPreview").classList.add("hidden");return;}
-      window.renderJournalEntries(window.generateJournalEntries(txn,"purchases",txn.paymentMethod||"Credit"),document.getElementById("purchaseJournalBody"));
+      window.renderJournalEntries(window.generateJournalEntries(txn,"purchases",txn.payment||{type:txn.paymentMethod||"Credit"}),document.getElementById("purchaseJournalBody"));
       document.getElementById("purchaseJournalPreview").classList.remove("hidden");
     }
     function renderPurchaseList(){
@@ -771,30 +918,71 @@ window.addEventListener("DOMContentLoaded", function () {
     document.getElementById("exportCsvBtn").onclick=function(){
       if(!_lastReport){alert("Run a report first.");return;}
       const{from,to,type}=_lastReport;
-      const rows=[["FinMatrix Export"],[`Period: ${from||"all"} to ${to||"all"}`],[`Generated: ${nowTS()}`],[]];
+      const comp=window.companyProfile;
+
+      // Standard report header with company info
+      const rows=[
+        [comp.name||"FinMatrix"],
+        [comp.tin ? `TIN: ${comp.tin}` : ""],
+        [comp.address||""],
+        [],
+        ["FinMatrix Accounting — Export"],
+        [`Generated: ${nowTS()}`],
+        []
+      ];
+
       if(type==="trial"){
-        rows.push(["TRIAL BALANCE"],["Account","Debit","Credit"]);
+        rows.push(
+          [comp.name||""],
+          ["TRIAL BALANCE"],
+          [`Period: ${from||"All"} to ${to||"All"}`],
+          [],
+          ["Account","Debit","Credit"]
+        );
         const ledger=buildLedger(from,to); let dr=0,cr=0;
-        Object.entries(ledger).forEach(([a,v])=>{dr+=v.debit;cr+=v.credit;rows.push([a,v.debit||"",v.credit||""]);});
-        rows.push(["TOTAL",dr.toFixed(2),cr.toFixed(2)]);
+        Object.entries(ledger).forEach(([a,v])=>{
+          dr+=v.debit;cr+=v.credit;
+          rows.push([a, v.debit>0?v.debit.toFixed(2):"", v.credit>0?v.credit.toFixed(2):""]);
+        });
+        rows.push([],["TOTAL",dr.toFixed(2),cr.toFixed(2)]);
+
       } else if(type==="is"){
-        rows.push(["INCOME STATEMENT"],["Account","Amount"]);
+        rows.push(
+          [comp.name||""],
+          ["INCOME STATEMENT"],
+          ["(Statement of Financial Performance)"],
+          [`For the period: ${from||"All"} to ${to||"All"}`],
+          []
+        );
         const ledger=buildLedger(from,to);
         const revAccts=Object.values(window.COA.sales||{}).flat();
         const expAccts=Object.values(window.COA.purchases||{}).flat();
         let rev=0,exp=0;
+
+        rows.push(["REVENUE","Amount"]);
         Object.entries(ledger).forEach(([a,v])=>{
           const net=v.credit-v.debit;
-          if(revAccts.includes(a)&&net!==0){rev+=net;rows.push([a,net.toFixed(2)]);}
+          if(revAccts.includes(a)&&net!==0){rev+=net;rows.push(["  "+a,net.toFixed(2)]);}
         });
         rows.push(["Total Revenue",rev.toFixed(2)],[]);
+
+        rows.push(["EXPENSES","Amount"]);
         Object.entries(ledger).forEach(([a,v])=>{
           const net=v.debit-v.credit;
-          if(expAccts.includes(a)&&net!==0){exp+=net;rows.push([a,net.toFixed(2)]);}
+          if(expAccts.includes(a)&&net!==0){exp+=net;rows.push(["  "+a,net.toFixed(2)]);}
         });
-        rows.push(["Total Expenses",exp.toFixed(2)],["Net Income",(rev-exp).toFixed(2)]);
+        rows.push(["Total Expenses","("+exp.toFixed(2)+")"],[]);
+        const ni=rev-exp;
+        rows.push([ni>=0?"NET INCOME":"NET LOSS", ni>=0?ni.toFixed(2):"("+Math.abs(ni).toFixed(2)+")"]);
+
       } else if(type==="bs"){
-        rows.push(["BALANCE SHEET"],["Section","Account","Amount"]);
+        rows.push(
+          [comp.name||""],
+          ["BALANCE SHEET"],
+          ["(Statement of Financial Position)"],
+          [`As of: ${to||"Today"}`],
+          []
+        );
         const ledger=buildLedger(from,to);
         const assetAccts =Object.values(window.COA.assets||{}).flat();
         const liabAccts  =Object.values(window.COA.liabilities||{}).flat();
@@ -802,10 +990,22 @@ window.addEventListener("DOMContentLoaded", function () {
         const revAccts   =Object.values(window.COA.sales||{}).flat();
         const expAccts   =Object.values(window.COA.purchases||{}).flat();
         let tA=0,tL=0,tE=0;
+
+        rows.push(["ASSETS","Amount"]);
         Object.entries(ledger).forEach(([a,v])=>{
-          if(assetAccts.includes(a)){const b=v.debit-v.credit;if(b!==0){tA+=b;rows.push(["Asset",a,b.toFixed(2)]);}}
-          if(liabAccts.includes(a)){const b=v.credit-v.debit;if(b!==0){tL+=b;rows.push(["Liability",a,b.toFixed(2)]);}}
-          if(equityAccts.includes(a)){const b=v.credit-v.debit;if(b!==0){tE+=b;rows.push(["Equity",a,b.toFixed(2)]);}}
+          if(assetAccts.includes(a)){const b=v.debit-v.credit;if(b!==0){tA+=b;rows.push(["  "+a,b.toFixed(2)]);}}
+        });
+        rows.push(["Total Assets",tA.toFixed(2)],[]);
+
+        rows.push(["LIABILITIES","Amount"]);
+        Object.entries(ledger).forEach(([a,v])=>{
+          if(liabAccts.includes(a)){const b=v.credit-v.debit;if(b!==0){tL+=b;rows.push(["  "+a,b.toFixed(2)]);}}
+        });
+        rows.push(["Total Liabilities",tL.toFixed(2)],[]);
+
+        rows.push(["EQUITY","Amount"]);
+        Object.entries(ledger).forEach(([a,v])=>{
+          if(equityAccts.includes(a)){const b=v.credit-v.debit;if(b!==0){tE+=b;rows.push(["  "+a,b.toFixed(2)]);}}
         });
         let rev=0,exp=0;
         Object.entries(ledger).forEach(([a,v])=>{
@@ -813,39 +1013,54 @@ window.addEventListener("DOMContentLoaded", function () {
           if(expAccts.includes(a)) exp+=v.debit-v.credit;
         });
         const ni=rev-exp;
-        if(ni!==0){tE+=ni;rows.push(["Equity","Current Year Net Income",ni.toFixed(2)]);}
-        rows.push(["","Total Assets",tA.toFixed(2)],["","Total Liabilities",tL.toFixed(2)],["","Total Equity",tE.toFixed(2)],["","Total Liabilities + Equity",(tL+tE).toFixed(2)]);
+        if(ni!==0){tE+=ni;rows.push(["  Current Year Net Income",ni.toFixed(2)]);}
+        rows.push(["Total Equity",tE.toFixed(2)],[]);
+        rows.push(["TOTAL LIABILITIES + EQUITY",(tL+tE).toFixed(2)]);
+
       } else {
+        rows.push([`Period: ${from||"All"} to ${to||"All"}`],[]);
         if(type==="both"||type==="sales"){
           rows.push(["SALES BY ACCOUNT"],["Account","Net","VAT","Gross"]);
           let tN=0,tV=0,tG=0;
-          Object.entries(buildAccTotals(window.savedSales,from,to)).forEach(([a,t])=>{tN+=t.net;tV+=t.vat;tG+=t.gross;rows.push([a,t.net.toFixed(2),t.vat.toFixed(2),t.gross.toFixed(2)]);});
+          Object.entries(buildAccTotals(window.savedSales,from,to)).forEach(([a,t])=>{
+            tN+=t.net;tV+=t.vat;tG+=t.gross;
+            rows.push([a,t.net.toFixed(2),t.vat.toFixed(2),t.gross.toFixed(2)]);
+          });
           rows.push(["TOTAL",tN.toFixed(2),tV.toFixed(2),tG.toFixed(2)],[]);
         }
         if(type==="both"||type==="purchases"){
           rows.push(["PURCHASES BY ACCOUNT"],["Account","Net","VAT","Gross"]);
           let tN=0,tV=0,tG=0;
-          Object.entries(buildAccTotals(window.savedPurchases,from,to)).forEach(([a,t])=>{tN+=t.net;tV+=t.vat;tG+=t.gross;rows.push([a,t.net.toFixed(2),t.vat.toFixed(2),t.gross.toFixed(2)]);});
+          Object.entries(buildAccTotals(window.savedPurchases,from,to)).forEach(([a,t])=>{
+            tN+=t.net;tV+=t.vat;tG+=t.gross;
+            rows.push([a,t.net.toFixed(2),t.vat.toFixed(2),t.gross.toFixed(2)]);
+          });
           rows.push(["TOTAL",tN.toFixed(2),tV.toFixed(2),tG.toFixed(2)]);
         }
       }
-      // Transaction detail
-      rows.push([],["TRANSACTION DETAIL"],["Type","Date","Party","TIN","Reference","Account","Net","VAT","Gross","Tax"]);
-      const addDetail=(list,label,nameKey)=>{
-        list.filter(x=>x.status==="POSTED").forEach(t=>{
-          t.rows.forEach(r=>{
-            const d=r.date||""; if(from&&d<from) return; if(to&&d>to) return;
-            const v=r.tax==="VAT"?r.net*0.12:0;
-            rows.push([label,r.date,t[nameKey],t.tin||"",t.reference||"",r.account||"",r.net.toFixed(2),v.toFixed(2),(r.net+v).toFixed(2),r.tax]);
+
+      // Transaction detail (for all non-financial-statement reports)
+      if(type==="both"||type==="sales"||type==="purchases"){
+        rows.push([],["TRANSACTION DETAIL"],["Type","Date","Party","TIN","Reference","Account","Net","VAT","Gross","Tax","Payment"]);
+        const addDetail=(list,label,nameKey)=>{
+          list.filter(x=>x.status==="POSTED").forEach(t=>{
+            t.rows.forEach(r=>{
+              const d=r.date||""; if(from&&d<from) return; if(to&&d>to) return;
+              const v=r.tax==="VAT"?r.net*0.12:0;
+              const pm=t.payment?.type||t.paymentMethod||"Credit";
+              rows.push([label,r.date,t[nameKey],t.tin||"",t.reference||"",r.account||"",
+                r.net.toFixed(2),v.toFixed(2),(r.net+v).toFixed(2),r.tax,pm]);
+            });
           });
-        });
-      };
-      if(type==="both"||type==="sales")     addDetail(window.savedSales,    "Sale",    "customer");
-      if(type==="both"||type==="purchases") addDetail(window.savedPurchases,"Purchase","supplier");
+        };
+        if(type==="both"||type==="sales")     addDetail(window.savedSales,    "Sale",    "customer");
+        if(type==="both"||type==="purchases") addDetail(window.savedPurchases,"Purchase","supplier");
+      }
+
       const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(",")).join("\r\n");
       const a=document.createElement("a");
-      a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
-      a.download=`FinMatrix_${from||"all"}_${to||"all"}.csv`;
+      a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8;"}));
+      a.download=`FinMatrix_${type}_${from||"all"}_${to||"all"}.csv`;
       a.click();
     };
 
@@ -914,7 +1129,24 @@ window.addEventListener("DOMContentLoaded", function () {
             if(action==="delete-group"){if(!confirm(`Delete group "${g}" and all accounts?`)) return;delete window.COA[t][g];}
             else if(action==="rename-group"){const n=prompt(`Rename "${g}":`,g);if(!n||n===g) return;const newG={};Object.keys(window.COA[t]).forEach(k=>{newG[k===g?n:k]=window.COA[t][k];});window.COA[t]=newG;}
             else if(action==="delete-acc"){if(!confirm(`Remove "${window.COA[t][g][+index]}"?`)) return;window.COA[t][g].splice(+index,1);}
-            else if(action==="rename-acc"){const cur=window.COA[t][g][+index];const n=prompt(`Rename "${cur}":`,cur);if(!n||n===cur) return;window.COA[t][g][+index]=n.trim();}
+            else if(action==="rename-acc"){
+              const cur=window.COA[t][g][+index];
+              const n=prompt(`Rename "${cur}":`,cur);
+              if(!n||n.trim()===cur) return;
+              const newName=n.trim();
+              window.COA[t][g][+index]=newName;
+              // Update all existing saved transactions that used the old account name
+              let updated=0;
+              window.savedSales.forEach((s,si)=>{
+                s.rows.forEach((r,ri)=>{ if(r.account===cur){ window.savedSales[si].rows[ri].account=newName; updated++; } });
+                if(updated>0) window.DB.updateSale(si);
+              });
+              updated=0;
+              window.savedPurchases.forEach((p,pi)=>{
+                p.rows.forEach((r,ri)=>{ if(r.account===cur){ window.savedPurchases[pi].rows[ri].account=newName; updated++; } });
+                if(updated>0) window.DB.updatePurchase(pi);
+              });
+            }
             window.DB.saveCOA();renderCOA();
           };
         });
