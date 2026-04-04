@@ -918,94 +918,145 @@ window.addEventListener("DOMContentLoaded", function () {
     document.getElementById("exportCsvBtn").onclick=function(){
       if(!_lastReport){alert("Run a report first.");return;}
       const{from,to,type}=_lastReport;
-      const comp=window.companyProfile;
+      const comp = window.companyProfile || {};
+      const compName = comp.name || "FinMatrix";
+      const compTin  = comp.tin  ? `TIN: ${comp.tin}` : "";
+      const compAddr = comp.address || "";
+      const compNature = comp.nature || "";
+      const generated = nowTS();
 
-      // Standard report header with company info
-      const rows=[
-        [comp.name||"FinMatrix"],
-        [comp.tin ? `TIN: ${comp.tin}` : ""],
-        [comp.address||""],
-        [],
-        ["FinMatrix Accounting — Export"],
-        [`Generated: ${nowTS()}`],
-        []
-      ];
+      // ── Standard accounting report header ──
+      function reportHeader(title, periodLabel) {
+        return [
+          [compName],
+          compTin  ? [compTin]  : [],
+          compAddr ? [compAddr] : [],
+          compNature ? [`Business Type: ${compNature} Registered`] : [],
+          [],
+          [title],
+          [periodLabel],
+          [`Generated: ${generated}`],
+          [`Prepared by: FinMatrix Accounting`],
+          []
+        ].filter(r => r.length === 0 || r[0] !== "");
+      }
+
+      let rows = [];
 
       if(type==="trial"){
-        rows.push(
-          [comp.name||""],
-          ["TRIAL BALANCE"],
-          [`Period: ${from||"All"} to ${to||"All"}`],
-          [],
-          ["Account","Debit","Credit"]
-        );
-        const ledger=buildLedger(from,to); let dr=0,cr=0;
+        rows.push(...reportHeader(
+          "TRIAL BALANCE",
+          `For the period: ${from ? window.formatDate(from) : "All"} to ${to ? window.formatDate(to) : "All"}`
+        ));
+        rows.push(["Account Name","Debit (₱)","Credit (₱)"]);
+        rows.push(["","",""]);
+        const ledger=buildLedger(from,to);
+        let dr=0,cr=0;
         Object.entries(ledger).forEach(([a,v])=>{
-          dr+=v.debit;cr+=v.credit;
-          rows.push([a, v.debit>0?v.debit.toFixed(2):"", v.credit>0?v.credit.toFixed(2):""]);
+          dr+=v.debit; cr+=v.credit;
+          rows.push([
+            a,
+            v.debit  > 0 ? v.debit.toFixed(2)  : "",
+            v.credit > 0 ? v.credit.toFixed(2) : ""
+          ]);
         });
-        rows.push([],["TOTAL",dr.toFixed(2),cr.toFixed(2)]);
+        rows.push([]);
+        rows.push(["TOTAL", dr.toFixed(2), cr.toFixed(2)]);
+        rows.push([]);
+        rows.push([Math.abs(dr-cr)<0.01 ? "Status: BALANCED ✓" : "Status: OUT OF BALANCE ⚠"]);
 
       } else if(type==="is"){
-        rows.push(
-          [comp.name||""],
-          ["INCOME STATEMENT"],
-          ["(Statement of Financial Performance)"],
-          [`For the period: ${from||"All"} to ${to||"All"}`],
-          []
-        );
+        rows.push(...reportHeader(
+          "INCOME STATEMENT",
+          `For the period: ${from ? window.formatDate(from) : "Beginning"} to ${to ? window.formatDate(to) : "Present"}`
+        ));
+        rows.push(["(Statement of Financial Performance)"]);
+        rows.push([]);
+
         const ledger=buildLedger(from,to);
         const revAccts=Object.values(window.COA.sales||{}).flat();
         const expAccts=Object.values(window.COA.purchases||{}).flat();
-        let rev=0,exp=0;
+        let rev=0, exp=0;
 
-        rows.push(["REVENUE","Amount"]);
+        rows.push(["REVENUE","Amount (₱)"]);
+        rows.push(["─────────────────────────────",""]);
         Object.entries(ledger).forEach(([a,v])=>{
           const net=v.credit-v.debit;
-          if(revAccts.includes(a)&&net!==0){rev+=net;rows.push(["  "+a,net.toFixed(2)]);}
+          if(revAccts.includes(a)&&net!==0){ rev+=net; rows.push(["  "+a, net.toFixed(2)]); }
         });
-        rows.push(["Total Revenue",rev.toFixed(2)],[]);
+        if(rev===0) rows.push(["  (No revenue recorded)","0.00"]);
+        rows.push(["─────────────────────────────",""]);
+        rows.push(["TOTAL REVENUE", rev.toFixed(2)]);
+        rows.push([]);
 
-        rows.push(["EXPENSES","Amount"]);
+        rows.push(["EXPENSES","Amount (₱)"]);
+        rows.push(["─────────────────────────────",""]);
         Object.entries(ledger).forEach(([a,v])=>{
           const net=v.debit-v.credit;
-          if(expAccts.includes(a)&&net!==0){exp+=net;rows.push(["  "+a,net.toFixed(2)]);}
+          if(expAccts.includes(a)&&net!==0){ exp+=net; rows.push(["  "+a, "("+net.toFixed(2)+")"]); }
         });
-        rows.push(["Total Expenses","("+exp.toFixed(2)+")"],[]);
+        if(exp===0) rows.push(["  (No expenses recorded)","0.00"]);
+        rows.push(["─────────────────────────────",""]);
+        rows.push(["TOTAL EXPENSES", "("+exp.toFixed(2)+")"]);
+        rows.push([]);
+        rows.push(["═════════════════════════════",""]);
+
         const ni=rev-exp;
-        rows.push([ni>=0?"NET INCOME":"NET LOSS", ni>=0?ni.toFixed(2):"("+Math.abs(ni).toFixed(2)+")"]);
+        rows.push([
+          ni>=0 ? "NET INCOME" : "NET LOSS",
+          ni>=0 ? ni.toFixed(2) : "("+Math.abs(ni).toFixed(2)+")"
+        ]);
 
       } else if(type==="bs"){
-        rows.push(
-          [comp.name||""],
-          ["BALANCE SHEET"],
-          ["(Statement of Financial Position)"],
-          [`As of: ${to||"Today"}`],
-          []
-        );
+        rows.push(...reportHeader(
+          "BALANCE SHEET",
+          `As of: ${to ? window.formatDate(to) : "Today"}`
+        ));
+        rows.push(["(Statement of Financial Position)"]);
+        rows.push([]);
+
         const ledger=buildLedger(from,to);
-        const assetAccts =Object.values(window.COA.assets||{}).flat();
-        const liabAccts  =Object.values(window.COA.liabilities||{}).flat();
-        const equityAccts=Object.values(window.COA.equity||{}).flat();
-        const revAccts   =Object.values(window.COA.sales||{}).flat();
-        const expAccts   =Object.values(window.COA.purchases||{}).flat();
-        let tA=0,tL=0,tE=0;
+        const assetAccts  = Object.values(window.COA.assets||{}).flat();
+        const liabAccts   = Object.values(window.COA.liabilities||{}).flat();
+        const equityAccts = Object.values(window.COA.equity||{}).flat();
+        const revAccts    = Object.values(window.COA.sales||{}).flat();
+        const expAccts    = Object.values(window.COA.purchases||{}).flat();
+        let tA=0, tL=0, tE=0;
+        const fmtA = v => v < 0 ? "("+Math.abs(v).toFixed(2)+")" : v.toFixed(2);
 
-        rows.push(["ASSETS","Amount"]);
+        rows.push(["ASSETS","Amount (₱)"]);
+        rows.push(["─────────────────────────────",""]);
         Object.entries(ledger).forEach(([a,v])=>{
-          if(assetAccts.includes(a)){const b=v.debit-v.credit;if(b!==0){tA+=b;rows.push(["  "+a,b.toFixed(2)]);}}
+          if(assetAccts.includes(a)){
+            const b=v.debit-v.credit;
+            if(b!==0){ tA+=b; rows.push(["  "+a, fmtA(b)]); }
+          }
         });
-        rows.push(["Total Assets",tA.toFixed(2)],[]);
+        if(tA===0) rows.push(["  (No asset balances)","0.00"]);
+        rows.push(["─────────────────────────────",""]);
+        rows.push(["TOTAL ASSETS", fmtA(tA)]);
+        rows.push([]);
 
-        rows.push(["LIABILITIES","Amount"]);
+        rows.push(["LIABILITIES","Amount (₱)"]);
+        rows.push(["─────────────────────────────",""]);
         Object.entries(ledger).forEach(([a,v])=>{
-          if(liabAccts.includes(a)){const b=v.credit-v.debit;if(b!==0){tL+=b;rows.push(["  "+a,b.toFixed(2)]);}}
+          if(liabAccts.includes(a)){
+            const b=v.credit-v.debit;
+            if(b!==0){ tL+=b; rows.push(["  "+a, fmtA(b)]); }
+          }
         });
-        rows.push(["Total Liabilities",tL.toFixed(2)],[]);
+        if(tL===0) rows.push(["  (No liability balances)","0.00"]);
+        rows.push(["─────────────────────────────",""]);
+        rows.push(["TOTAL LIABILITIES", fmtA(tL)]);
+        rows.push([]);
 
-        rows.push(["EQUITY","Amount"]);
+        rows.push(["EQUITY","Amount (₱)"]);
+        rows.push(["─────────────────────────────",""]);
         Object.entries(ledger).forEach(([a,v])=>{
-          if(equityAccts.includes(a)){const b=v.credit-v.debit;if(b!==0){tE+=b;rows.push(["  "+a,b.toFixed(2)]);}}
+          if(equityAccts.includes(a)){
+            const b=v.credit-v.debit;
+            if(b!==0){ tE+=b; rows.push(["  "+a, fmtA(b)]); }
+          }
         });
         let rev=0,exp=0;
         Object.entries(ledger).forEach(([a,v])=>{
@@ -1013,43 +1064,88 @@ window.addEventListener("DOMContentLoaded", function () {
           if(expAccts.includes(a)) exp+=v.debit-v.credit;
         });
         const ni=rev-exp;
-        if(ni!==0){tE+=ni;rows.push(["  Current Year Net Income",ni.toFixed(2)]);}
-        rows.push(["Total Equity",tE.toFixed(2)],[]);
-        rows.push(["TOTAL LIABILITIES + EQUITY",(tL+tE).toFixed(2)]);
+        if(ni!==0){ tE+=ni; rows.push(["  Current Year Net Income", fmtA(ni)]); }
+        if(tE===0) rows.push(["  (No equity balances)","0.00"]);
+        rows.push(["─────────────────────────────",""]);
+        rows.push(["TOTAL EQUITY", fmtA(tE)]);
+        rows.push([]);
+        rows.push(["═════════════════════════════",""]);
+        rows.push(["TOTAL LIABILITIES + EQUITY", fmtA(tL+tE)]);
+        rows.push([]);
+        rows.push([Math.abs(tA-(tL+tE))<0.01 ? "Status: BALANCED ✓" : "Status: OUT OF BALANCE ⚠"]);
 
       } else {
-        rows.push([`Period: ${from||"All"} to ${to||"All"}`],[]);
-        if(type==="both"||type==="sales"){
-          rows.push(["SALES BY ACCOUNT"],["Account","Net","VAT","Gross"]);
-          let tN=0,tV=0,tG=0;
-          Object.entries(buildAccTotals(window.savedSales,from,to)).forEach(([a,t])=>{
-            tN+=t.net;tV+=t.vat;tG+=t.gross;
-            rows.push([a,t.net.toFixed(2),t.vat.toFixed(2),t.gross.toFixed(2)]);
-          });
-          rows.push(["TOTAL",tN.toFixed(2),tV.toFixed(2),tG.toFixed(2)],[]);
-        }
-        if(type==="both"||type==="purchases"){
-          rows.push(["PURCHASES BY ACCOUNT"],["Account","Net","VAT","Gross"]);
-          let tN=0,tV=0,tG=0;
-          Object.entries(buildAccTotals(window.savedPurchases,from,to)).forEach(([a,t])=>{
-            tN+=t.net;tV+=t.vat;tG+=t.gross;
-            rows.push([a,t.net.toFixed(2),t.vat.toFixed(2),t.gross.toFixed(2)]);
-          });
-          rows.push(["TOTAL",tN.toFixed(2),tV.toFixed(2),tG.toFixed(2)]);
-        }
-      }
+        // Sales & Purchases account summary
+        rows.push(...reportHeader(
+          type==="sales" ? "SALES REPORT" : type==="purchases" ? "PURCHASES REPORT" : "SALES & PURCHASES REPORT",
+          `For the period: ${from ? window.formatDate(from) : "All"} to ${to ? window.formatDate(to) : "All"}`
+        ));
 
-      // Transaction detail (for all non-financial-statement reports)
-      if(type==="both"||type==="sales"||type==="purchases"){
-        rows.push([],["TRANSACTION DETAIL"],["Type","Date","Party","TIN","Reference","Account","Net","VAT","Gross","Tax","Payment"]);
+        if(type==="both"||type==="sales"){
+          rows.push(["SALES BY ACCOUNT","Net (₱)","VAT (₱)","Gross (₱)"]);
+          rows.push(["─────────────────────────────","","",""]);
+          let tN=0,tV=0,tG=0;
+          const sm=buildAccTotals(window.savedSales,from,to);
+          if(Object.keys(sm).length===0){
+            rows.push(["  (No posted sales)","0.00","0.00","0.00"]);
+          } else {
+            Object.entries(sm).forEach(([a,t])=>{
+              tN+=t.net;tV+=t.vat;tG+=t.gross;
+              rows.push(["  "+a,t.net.toFixed(2),t.vat.toFixed(2),t.gross.toFixed(2)]);
+            });
+          }
+          rows.push(["─────────────────────────────","","",""]);
+          rows.push(["TOTAL SALES",tN.toFixed(2),tV.toFixed(2),tG.toFixed(2)]);
+          rows.push([]);
+        }
+
+        if(type==="both"||type==="purchases"){
+          rows.push(["PURCHASES BY ACCOUNT","Net (₱)","VAT (₱)","Gross (₱)"]);
+          rows.push(["─────────────────────────────","","",""]);
+          let tN=0,tV=0,tG=0;
+          const pm=buildAccTotals(window.savedPurchases,from,to);
+          if(Object.keys(pm).length===0){
+            rows.push(["  (No posted purchases)","0.00","0.00","0.00"]);
+          } else {
+            Object.entries(pm).forEach(([a,t])=>{
+              tN+=t.net;tV+=t.vat;tG+=t.gross;
+              rows.push(["  "+a,t.net.toFixed(2),t.vat.toFixed(2),t.gross.toFixed(2)]);
+            });
+          }
+          rows.push(["─────────────────────────────","","",""]);
+          rows.push(["TOTAL PURCHASES",tN.toFixed(2),tV.toFixed(2),tG.toFixed(2)]);
+          rows.push([]);
+        }
+
+        // Transaction detail
+        rows.push([]);
+        rows.push(["TRANSACTION DETAIL"]);
+        rows.push(["Type","Date","Party","TIN","Reference No.","Account","Net (₱)","VAT (₱)","Gross (₱)","Tax Type","Payment Method","Payment Date","Check No.","Ref No."]);
+        rows.push(["─────","────","─────","───","────────────","───────","────────","────────","─────────","────────","──────────────","────────────","─────────","──────"]);
+
         const addDetail=(list,label,nameKey)=>{
           list.filter(x=>x.status==="POSTED").forEach(t=>{
             t.rows.forEach(r=>{
-              const d=r.date||""; if(from&&d<from) return; if(to&&d>to) return;
-              const v=r.tax==="VAT"?r.net*0.12:0;
-              const pm=t.payment?.type||t.paymentMethod||"Credit";
-              rows.push([label,r.date,t[nameKey],t.tin||"",t.reference||"",r.account||"",
-                r.net.toFixed(2),v.toFixed(2),(r.net+v).toFixed(2),r.tax,pm]);
+              const d=r.date||"";
+              if(from&&d<from) return; if(to&&d>to) return;
+              const v=r.tax==="VAT"?+(r.net*0.12).toFixed(2):0;
+              const pay=t.payment||{type:t.paymentMethod||"Credit"};
+              rows.push([
+                label,
+                r.date||"",
+                t[nameKey]||"",
+                t.tin||"",
+                t.reference||"",
+                r.account||"",
+                r.net.toFixed(2),
+                v.toFixed(2),
+                (r.net+v).toFixed(2),
+                r.tax||"",
+                pay.type||"Credit",
+                pay.date||"",
+                pay.checkNo||"",
+                pay.refNo||""
+              ]);
             });
           });
         };
@@ -1058,38 +1154,130 @@ window.addEventListener("DOMContentLoaded", function () {
       }
 
       const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(",")).join("\r\n");
+      const bom = "\uFEFF"; // UTF-8 BOM for Excel compatibility
       const a=document.createElement("a");
-      a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8;"}));
-      a.download=`FinMatrix_${type}_${from||"all"}_${to||"all"}.csv`;
+      a.href=URL.createObjectURL(new Blob([bom+csv],{type:"text/csv;charset=utf-8;"}));
+      a.download=`FinMatrix_${type.toUpperCase()}_${from||"all"}_${to||"all"}.csv`;
       a.click();
     };
 
-    // Google Drive backup button
-    document.getElementById("driveBackupBtn").onclick=function(){
-      if(!navigator.onLine){
-        alert("You are offline. Please go online to back up to Google Drive.");
+    // ── Google Drive Backup ───────────────────────────
+    // Uses Google Identity Services (GIS) + Drive API v3
+    const GDRIVE_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID"; // Replace with your OAuth client ID
+    const GDRIVE_SCOPE     = "https://www.googleapis.com/auth/drive.file";
+
+    function getBackupJson() {
+      return JSON.stringify({
+        exportedAt:     nowTS(),
+        version:        window.APP_INFO.version,
+        companyProfile: window.companyProfile,
+        COA:            window.COA,
+        sales:          window.savedSales,
+        purchases:      window.savedPurchases
+      }, null, 2);
+    }
+
+    async function uploadToDrive(token) {
+      const filename = `FinMatrix_Backup_${new Date().toISOString().slice(0,10)}.json`;
+      const content  = getBackupJson();
+      const metadata = { name: filename, mimeType: "application/json" };
+
+      // Multipart upload
+      const boundary = "finmatrix_boundary";
+      const body = [
+        `--${boundary}`,
+        "Content-Type: application/json; charset=UTF-8",
+        "",
+        JSON.stringify(metadata),
+        `--${boundary}`,
+        "Content-Type: application/json",
+        "",
+        content,
+        `--${boundary}--`
+      ].join("\r\n");
+
+      const res = await fetch(
+        "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": `multipart/related; boundary=${boundary}`
+          },
+          body
+        }
+      );
+
+      if (!res.ok) throw new Error(`Drive upload failed: ${res.status}`);
+      const file = await res.json();
+      return file.name;
+    }
+
+    document.getElementById("driveBackupBtn").onclick = async function () {
+      if (!navigator.onLine) {
+        alert("⚠️ You are offline.\n\nPlease go online to back up to Google Drive.");
         return;
       }
-      const data={
-        exportedAt: nowTS(),
-        version: window.APP_INFO.version,
-        companyProfile: window.companyProfile,
-        COA: window.COA,
-        sales: window.savedSales,
-        purchases: window.savedPurchases
-      };
-      const json=JSON.stringify(data,null,2);
-      const blob=new Blob([json],{type:"application/json"});
-      const url=URL.createObjectURL(blob);
-      const a=document.createElement("a");
-      a.href=url;
-      a.download=`FinMatrix_Backup_${new Date().toISOString().slice(0,10)}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      // Note: Full Google Drive API integration requires OAuth — this downloads
-      // the file which user can manually save to Drive. True API integration
-      // will be added in PWA version.
-      alert("Backup file downloaded! Save it to your Google Drive manually.\n\nFull auto-backup to Drive will be available in the PWA version.");
+
+      // Check if Google Identity Services is loaded
+      if (typeof google === "undefined" || !google.accounts) {
+        // Fallback: download JSON file manually
+        const btn = this;
+        btn.textContent = "☁️ Downloading…";
+        const blob = new Blob([getBackupJson()], { type: "application/json" });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement("a");
+        a.href     = url;
+        a.download = `FinMatrix_Backup_${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        btn.textContent = "☁️ Backup Data";
+        alert("✅ Backup file downloaded!\n\nSave it to your Google Drive manually.\n\nNote: To enable auto-upload to Drive, add your Google OAuth Client ID in Settings.");
+        return;
+      }
+
+      // Google Identity Services token flow
+      this.textContent = "☁️ Connecting…";
+      this.disabled = true;
+      const btn = this;
+
+      try {
+        const token = await new Promise((resolve, reject) => {
+          const client = google.accounts.oauth2.initTokenClient({
+            client_id: GDRIVE_CLIENT_ID,
+            scope:     GDRIVE_SCOPE,
+            callback:  (res) => {
+              if (res.error) reject(new Error(res.error));
+              else resolve(res.access_token);
+            }
+          });
+          client.requestAccessToken({ prompt: "consent" });
+        });
+
+        btn.textContent = "☁️ Uploading…";
+        const filename = await uploadToDrive(token);
+        btn.textContent = "☁️ Backup Data";
+        btn.disabled = false;
+        alert(`✅ Backup saved to Google Drive!\n\nFile: ${filename}`);
+
+      } catch(err) {
+        console.error("Drive backup error:", err);
+        btn.textContent = "☁️ Backup Data";
+        btn.disabled = false;
+        if (GDRIVE_CLIENT_ID === "YOUR_GOOGLE_CLIENT_ID") {
+          alert("⚠️ Google Drive not configured yet.\n\nTo enable:\n1. Go to console.cloud.google.com\n2. Create a project → Enable Drive API\n3. Create OAuth 2.0 credentials\n4. Replace YOUR_GOOGLE_CLIENT_ID in main.js\n\nFor now, your backup has been downloaded as a file.");
+          // Fallback to file download
+          const blob = new Blob([getBackupJson()], { type: "application/json" });
+          const url  = URL.createObjectURL(blob);
+          const a    = document.createElement("a");
+          a.href = url;
+          a.download = `FinMatrix_Backup_${new Date().toISOString().slice(0,10)}.json`;
+          a.click();
+          URL.revokeObjectURL(url);
+        } else {
+          alert(`❌ Backup failed: ${err.message}\n\nPlease try again.`);
+        }
+      }
     };
 
     // ══════════════════════════════════════════════════

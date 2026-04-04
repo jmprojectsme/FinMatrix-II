@@ -124,14 +124,6 @@
         <div><label>Customer Name</label><input type="text" id="salesCustomer" autocomplete="off"></div>
         <div><label>TIN Number</label><input type="text" id="salesTin" autocomplete="off" placeholder="000-000-000"></div>
         <div><label>Reference No.</label><input type="text" id="salesReference" autocomplete="off"></div>
-        <div>
-          <label>Payment Method</label>
-          <select id="salesPaymentMethod" class="form-select">
-            <option value="Credit">Credit (AR)</option>
-            <option value="Cash">Cash</option>
-            <option value="Bank">Bank Transfer</option>
-          </select>
-        </div>
       </div>
       <div class="table-wrapper">
         <table class="txn-table">
@@ -154,6 +146,66 @@
           <div class="summary-row grand-total"><span>Grand Total:</span><strong id="salesSummaryGrand">0.00</strong></div>
         </div>
       </div>
+
+      <!-- PAYMENT DETAILS — Xero-style, below line items -->
+      <div class="payment-section" id="salesPaymentSection">
+        <h4 class="payment-section-title">💳 Payment Details</h4>
+        <div class="payment-type-row">
+          <label class="payment-type-label">Payment Type</label>
+          <div class="payment-type-options" id="salesPaymentTypeOptions">
+            <label class="ptype-btn"><input type="radio" name="salePayType" value="Credit" checked><span>Credit (AR)</span></label>
+            <label class="ptype-btn"><input type="radio" name="salePayType" value="Cash"><span>Cash</span></label>
+            <label class="ptype-btn"><input type="radio" name="salePayType" value="Check"><span>Check</span></label>
+            <label class="ptype-btn"><input type="radio" name="salePayType" value="GCash"><span>GCash</span></label>
+            <label class="ptype-btn"><input type="radio" name="salePayType" value="Maya"><span>Maya</span></label>
+            <label class="ptype-btn"><input type="radio" name="salePayType" value="EWallet"><span>Other E-Wallet</span></label>
+          </div>
+        </div>
+        <!-- Dynamic fields per payment type -->
+        <div class="payment-fields hidden" id="salePayFields_Credit">
+          <p class="payment-note">📋 Payment will be recorded as Accounts Receivable. Collect payment separately.</p>
+        </div>
+        <div class="payment-fields hidden" id="salePayFields_Cash">
+          <div class="payment-grid">
+            <div><label>Payment Date</label><input type="date" id="salePayDate_Cash"></div>
+            <div><label>Amount Received</label><input type="number" id="salePayAmt_Cash" min="0" step="0.01" placeholder="0.00"></div>
+          </div>
+        </div>
+        <div class="payment-fields hidden" id="salePayFields_Check">
+          <div class="payment-grid">
+            <div><label>Check Date</label><input type="date" id="salePayDate_Check"></div>
+            <div><label>Bank Name</label><input type="text" id="salePayBank_Check" placeholder="e.g. BDO, BPI, Metrobank"></div>
+            <div><label>Check Number</label><input type="text" id="salePayCheckNo" placeholder="e.g. 000123456"></div>
+            <div><label>Amount</label><input type="number" id="salePayAmt_Check" min="0" step="0.01" placeholder="0.00"></div>
+          </div>
+        </div>
+        <div class="payment-fields hidden" id="salePayFields_GCash">
+          <div class="payment-grid">
+            <div><label>Payment Date</label><input type="date" id="salePayDate_GCash"></div>
+            <div><label>GCash Account Name</label><input type="text" id="salePayAccName_GCash" placeholder="Account name"></div>
+            <div><label>Reference No.</label><input type="text" id="salePayRef_GCash" placeholder="GCash reference number"></div>
+            <div><label>Amount</label><input type="number" id="salePayAmt_GCash" min="0" step="0.01" placeholder="0.00"></div>
+          </div>
+        </div>
+        <div class="payment-fields hidden" id="salePayFields_Maya">
+          <div class="payment-grid">
+            <div><label>Payment Date</label><input type="date" id="salePayDate_Maya"></div>
+            <div><label>Maya Account Name</label><input type="text" id="salePayAccName_Maya" placeholder="Account name"></div>
+            <div><label>Reference No.</label><input type="text" id="salePayRef_Maya" placeholder="Maya reference number"></div>
+            <div><label>Amount</label><input type="number" id="salePayAmt_Maya" min="0" step="0.01" placeholder="0.00"></div>
+          </div>
+        </div>
+        <div class="payment-fields hidden" id="salePayFields_EWallet">
+          <div class="payment-grid">
+            <div><label>Payment Date</label><input type="date" id="salePayDate_EWallet"></div>
+            <div><label>E-Wallet Name</label><input type="text" id="salePayWalletName" placeholder="e.g. ShopeePay, Coins.ph"></div>
+            <div><label>Account Name</label><input type="text" id="salePayAccName_EWallet" placeholder="Account name"></div>
+            <div><label>Reference No.</label><input type="text" id="salePayRef_EWallet" placeholder="Reference number"></div>
+            <div><label>Amount</label><input type="number" id="salePayAmt_EWallet" min="0" step="0.01" placeholder="0.00"></div>
+          </div>
+        </div>
+      </div>
+
       <div id="salesJournalPreview" class="journal-preview hidden">
         <h4 class="journal-title">Journal Entries</h4>
         <table class="journal-table">
@@ -204,14 +256,6 @@
         <div><label>Supplier Name</label><input type="text" id="purchaseSupplier" autocomplete="off"></div>
         <div><label>TIN Number</label><input type="text" id="purchaseTin" autocomplete="off" placeholder="000-000-000"></div>
         <div><label>Reference No.</label><input type="text" id="purchaseReference" autocomplete="off"></div>
-        <div>
-          <label>Payment Method</label>
-          <select id="purchasePaymentMethod" class="form-select">
-            <option value="Credit">Credit (AP)</option>
-            <option value="Cash">Cash</option>
-            <option value="Bank">Bank Transfer</option>
-          </select>
-        </div>
       </div>
       <div class="table-wrapper">
         <table class="txn-table">
@@ -234,6 +278,65 @@
           <div class="summary-row grand-total"><span>Grand Total:</span><strong id="purchaseSummaryGrand">0.00</strong></div>
         </div>
       </div>
+
+      <!-- PAYMENT DETAILS — Xero-style -->
+      <div class="payment-section" id="purchasePaymentSection">
+        <h4 class="payment-section-title">💳 Payment Details</h4>
+        <div class="payment-type-row">
+          <label class="payment-type-label">Payment Type</label>
+          <div class="payment-type-options" id="purchasePaymentTypeOptions">
+            <label class="ptype-btn"><input type="radio" name="purchPayType" value="Credit" checked><span>Credit (AP)</span></label>
+            <label class="ptype-btn"><input type="radio" name="purchPayType" value="Cash"><span>Cash</span></label>
+            <label class="ptype-btn"><input type="radio" name="purchPayType" value="Check"><span>Check</span></label>
+            <label class="ptype-btn"><input type="radio" name="purchPayType" value="GCash"><span>GCash</span></label>
+            <label class="ptype-btn"><input type="radio" name="purchPayType" value="Maya"><span>Maya</span></label>
+            <label class="ptype-btn"><input type="radio" name="purchPayType" value="EWallet"><span>Other E-Wallet</span></label>
+          </div>
+        </div>
+        <div class="payment-fields hidden" id="purchPayFields_Credit">
+          <p class="payment-note">📋 Payment will be recorded as Accounts Payable. Pay supplier separately.</p>
+        </div>
+        <div class="payment-fields hidden" id="purchPayFields_Cash">
+          <div class="payment-grid">
+            <div><label>Payment Date</label><input type="date" id="purchPayDate_Cash"></div>
+            <div><label>Amount Paid</label><input type="number" id="purchPayAmt_Cash" min="0" step="0.01" placeholder="0.00"></div>
+          </div>
+        </div>
+        <div class="payment-fields hidden" id="purchPayFields_Check">
+          <div class="payment-grid">
+            <div><label>Check Date</label><input type="date" id="purchPayDate_Check"></div>
+            <div><label>Bank Name</label><input type="text" id="purchPayBank_Check" placeholder="e.g. BDO, BPI, Metrobank"></div>
+            <div><label>Check Number</label><input type="text" id="purchPayCheckNo" placeholder="e.g. 000123456"></div>
+            <div><label>Amount</label><input type="number" id="purchPayAmt_Check" min="0" step="0.01" placeholder="0.00"></div>
+          </div>
+        </div>
+        <div class="payment-fields hidden" id="purchPayFields_GCash">
+          <div class="payment-grid">
+            <div><label>Payment Date</label><input type="date" id="purchPayDate_GCash"></div>
+            <div><label>GCash Account Name</label><input type="text" id="purchPayAccName_GCash" placeholder="Account name"></div>
+            <div><label>Reference No.</label><input type="text" id="purchPayRef_GCash" placeholder="GCash reference number"></div>
+            <div><label>Amount</label><input type="number" id="purchPayAmt_GCash" min="0" step="0.01" placeholder="0.00"></div>
+          </div>
+        </div>
+        <div class="payment-fields hidden" id="purchPayFields_Maya">
+          <div class="payment-grid">
+            <div><label>Payment Date</label><input type="date" id="purchPayDate_Maya"></div>
+            <div><label>Maya Account Name</label><input type="text" id="purchPayAccName_Maya" placeholder="Account name"></div>
+            <div><label>Reference No.</label><input type="text" id="purchPayRef_Maya" placeholder="Maya reference number"></div>
+            <div><label>Amount</label><input type="number" id="purchPayAmt_Maya" min="0" step="0.01" placeholder="0.00"></div>
+          </div>
+        </div>
+        <div class="payment-fields hidden" id="purchPayFields_EWallet">
+          <div class="payment-grid">
+            <div><label>Payment Date</label><input type="date" id="purchPayDate_EWallet"></div>
+            <div><label>E-Wallet Name</label><input type="text" id="purchPayWalletName" placeholder="e.g. ShopeePay, Coins.ph"></div>
+            <div><label>Account Name</label><input type="text" id="purchPayAccName_EWallet" placeholder="Account name"></div>
+            <div><label>Reference No.</label><input type="text" id="purchPayRef_EWallet" placeholder="Reference number"></div>
+            <div><label>Amount</label><input type="number" id="purchPayAmt_EWallet" min="0" step="0.01" placeholder="0.00"></div>
+          </div>
+        </div>
+      </div>
+
       <div id="purchaseJournalPreview" class="journal-preview hidden">
         <h4 class="journal-title">Journal Entries</h4>
         <table class="journal-table">
@@ -359,6 +462,7 @@
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async></script>
 <script src="config.js"></script>
 <script src="db.js"></script>
 <script src="utils.js"></script>
